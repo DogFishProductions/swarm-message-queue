@@ -1,17 +1,21 @@
-'use strict';
+'use strict'
 
 const
-  zmq = require('zmq'),
+  ZMQ = require('zmq'),
+  SUBSCRIBER = ZMQ.socket('sub')
 
-  subscriber = zmq.socket('sub');
+SUBSCRIBER.subscribe('')
 
-subscriber.subscribe('');
-
-subscriber.on('message', (data) => {
+SUBSCRIBER.on('message', (data) => {
   let
     _message = JSON.parse(data),
-    _date = new Date(_message.timestamp);
-  console.log('File "' + _message.file + '" changed at ' + _date);
+    _date = new Date(_message.timestamp)
+  console.log('File "' + _message.file + '" changed at ' + _date)
 })
 
-subscriber.connect('tcp://publisher:5432');
+SUBSCRIBER.on('connect', (fd, ep) => {
+  console.log('Connected to endpoint:', ep)
+})
+
+SUBSCRIBER.monitor(500, 0);
+SUBSCRIBER.connect('tcp://publisher:5432')

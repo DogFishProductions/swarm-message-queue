@@ -1,4 +1,39 @@
 {
+  "name": "swarm-message-queue",
+  "version": "0.0.1",
+  "description": "An investigation into Docker Swarm using a Message Queue cluster",
+  "license": "MIT",
+  "author": {
+    "name": "Paul Nebel (http://paulnebel.io)",
+    "email": "paul@nebel.io"
+  },
+  "bugs": {
+    "url": "https://github.com/DogFishProductions/swarm-message-queue"
+  },
+  "homepage": "https://github.com/DogFishProductions/swarm-message-queue",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DogFishProductions/swarm-message-queuee.git"
+  },
+  "scripts": {
+    "test": "lab test/test-client.js -r console -v -L -m 20000",
+    "up": "docker-compose up neo4j server",
+    "start": "docker-compose start neo4j server",
+    "stop": "docker-compose stop neo4j server",
+    "lint": "lab -dL",
+    "coverage": "lab -s test/*test.js  -r lcov | coveralls",
+    "annotate": "docco neo4j-store.js -o doc"
+  },
+  "keywords": [
+    "docker",
+    "swarm",
+    "message",
+    "queue",
+    "zeromq"
+  ],
+  "engines": {
+    "node": ">=4.0.0"
+  },
   "dependencies": {
     "zmq": "^2.15.3"
   }

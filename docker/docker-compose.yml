@@ -1,13 +1,26 @@
-publisher:
- build: .
- volumes:
-  - $PWD/..:/home/dogfish/app
- command: sh ./shell/scripts/publisher-setup.sh
-
-subscriber:
- build: .
- volumes:
-  - $PWD/..:/home/dogfish/app
- links:
-  - publisher
- command: sh ./shell/scripts/subscriber-setup.sh
+version: '2'
+services:
+ publisher:
+  build: .
+  volumes:
+   - $PWD/..:/home/dogfish/app
+  command: sh ./shell/scripts/publisher-setup.sh
+ subscriber:
+  build: .
+  volumes:
+   - $PWD/..:/home/dogfish/app
+  links:
+   - publisher
+  command: sh ./shell/scripts/subscriber-setup.sh
+ responder:
+  build: .
+  volumes:
+   - $PWD/..:/home/dogfish/app
+  command: sh ./shell/scripts/responder-setup.sh
+ requester:
+  build: .
+  volumes:
+   - $PWD/..:/home/dogfish/app
+  links:
+   - responder
+  command: sh ./shell/scripts/requester-setup.sh

@@ -1,25 +1,24 @@
-'use strict';
+'use strict'
 
 const
-  fs = require('fs'),
-  zmq = require('zmq'),
+  FS = require('fs'),
+  ZMQ = require('zmq'),
+  FILENAME = process.argv[2],
+  PUBLISHER = ZMQ.socket('pub')
 
-  filename = process.argv[2],
-
-  publisher = zmq.socket('pub');
-
-fs.watch(filename, () => {
-  publisher.send(JSON.stringify({
+FS.watch(FILENAME, () => {
+  PUBLISHER.send(JSON.stringify({
     type: 'changed',
-    file: filename,
+    file: FILENAME,
     timestamp: Date.now()
-  }));
-});
+  }))
+})
 
-if (!filename) {
-  throw Error('A file to watch must be specified');
+if (!FILENAME) {
+  throw Error('A file to watch must be specified')
 }
 
-publisher.bind('tcp://*:5432', (err) => {
-  console.log('Listening for zmq subscribers...');
+PUBLISHER.bind('tcp://*:5432', (err) => {
+  // should handle errors here...
+  console.log('Listening for zmq subscribers...')
 })
