@@ -1,0 +1,13 @@
+publisher:
+ build: .
+ volumes:
+  - $PWD/..:/home/dogfish/app
+ command: sh ./shell/scripts/publisher-setup.sh
+
+subscriber:
+ build: .
+ volumes:
+  - $PWD/..:/home/dogfish/app
+ links:
+  - publisher
+ command: sh ./shell/scripts/subscriber-setup.sh
