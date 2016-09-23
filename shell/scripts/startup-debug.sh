@@ -5,4 +5,4 @@
 # We're running this script so that npm can find the directories we need to overcome install permission issues.
 source ~/.profile
 npm install
-node --harmony responder.js
+NODE_ENV=$1 node --inspect --debug-brk --harmony $2

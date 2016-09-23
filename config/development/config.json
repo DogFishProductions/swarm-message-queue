@@ -1,0 +1,54 @@
+{
+  "host": {
+    "protocol": "http",
+    "domain": "localhost",
+    "port": 3000,
+    "apiPathPrefix": "/api/v1"
+  },
+  "modules": {
+    "apiEndpoints": {
+      "requester": "/services/requesterService.js"
+    },
+    "services": {
+      "requester": "/services/lib/requester.js",
+      "responder": "/services/lib/responder.js",
+      "socket": "/services/lib/socket.js"
+    }
+  },
+  "services": {
+    "requester": {
+      "connection": {
+        "protocol": "tcp",
+        "domain": "responder",
+        "port": 5432
+      },
+      "processes": 3,
+      "filename": "target.txt",
+      "timeout": 2000,
+      "listenPort": 5678
+    },
+    "responder": {
+      "connection": {
+        "protocol": "tcp",
+        "domain": "*",
+        "port": 5432
+      }
+    },
+    "socket": {
+      "connection": {
+        "port": 5678,
+        "host": "localhost"
+      }
+    }
+  },
+  "apiEndpoints": {
+    "requester": {
+      "path": "/requester",
+      "method": "get",
+      "handler": {
+        "service": "socket",
+        "method": "makeRequest"
+      }
+    }
+  }
+}

@@ -1,26 +1,52 @@
 version: '2'
+
 services:
  publisher:
   build: .
   volumes:
    - $PWD/..:/home/dogfish/app
-  command: sh ./shell/scripts/publisher-setup.sh
+  networks:
+   - zerobridge
+  command: sh ./shell/scripts/startup.sh watcher-pub.js target.txt
+
  subscriber:
-  build: .
-  volumes:
-   - $PWD/..:/home/dogfish/app
-  links:
-   - publisher
-  command: sh ./shell/scripts/subscriber-setup.sh
+  extends:
+   service: publisher
+  command: sh ./shell/scripts/startup.sh watcher-sub.js
+
  responder:
-  build: .
-  volumes:
-   - $PWD/..:/home/dogfish/app
-  command: sh ./shell/scripts/responder-setup.sh
+  extends:
+   service: publisher
+  command: sh ./shell/scripts/startup.sh responder.js
+
  requester:
-  build: .
-  volumes:
-   - $PWD/..:/home/dogfish/app
-  links:
-   - responder
-  command: sh ./shell/scripts/requester-setup.sh
+  extends:
+   service: publisher
+  command: sh ./shell/scripts/startup.sh requester.js target.txt
+
+ responder-cluster:
+  extends:
+   service: publisher
+  networks:
+   zerobridge:
+    aliases:
+     - responder
+  command: sh ./shell/scripts/startup.sh responder-cluster.js
+
+ server:
+  extends:
+   service: publisher
+  ports:
+   - "3000:3000"
+  command: sh ./shell/scripts/startup.sh development ./services/server.js
+
+ debug:
+  extends:
+    service: publisher
+  ports:
+   - "3000:3000"
+   - "9229:9229"
+  command: sh ./shell/scripts/startup-debug.sh development ./services/server.js
+
+networks:
+ zerobridge:

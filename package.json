@@ -16,13 +16,16 @@
     "url": "https://github.com/DogFishProductions/swarm-message-queuee.git"
   },
   "scripts": {
-    "test": "lab test/test-client.js -r console -v -L -m 20000",
-    "up": "docker-compose up neo4j server",
-    "start": "docker-compose start neo4j server",
-    "stop": "docker-compose stop neo4j server",
-    "lint": "lab -dL",
-    "coverage": "lab -s test/*test.js  -r lcov | coveralls",
-    "annotate": "docco neo4j-store.js -o doc"
+    "start:requester": "gulp nodemon --script ./services/requesterManager.js --node_env local",
+    "start:responder": "gulp nodemon --script ./services/responderManager.js --node_env local",
+    "start:server": "gulp nodemon --script ./services/server.js --node_env local",
+    "debug:server": "NODE_ENV=development node --inspect --debug-brk --harmony ./services/server.js",
+    "docker:up:debug:server": "cd docker && docker-compose up debug",
+    "docker:up:server": "cd docker && docker-compose up server",
+    "docker:start:server": "cd docker && docker-compose start server",
+    "docker:stop": "cd docker && docker-compose stop",
+    "lint": "standard 'services/**/*.js' 'public/**/*.js' --fix",
+    "annotate": "gulp annotate"
   },
   "keywords": [
     "docker",
@@ -35,6 +38,20 @@
     "node": ">=4.0.0"
   },
   "dependencies": {
+    "async": "^2.0.1",
+    "express": "^4.14.0",
+    "lodash": "^4.16.1",
+    "morgan": "^1.7.0",
+    "nconf": "^0.8.4",
+    "node-uuid": "^1.4.7",
+    "q": "^1.4.1",
     "zmq": "^2.15.3"
+  },
+  "devDependencies": {
+    "gulp": "^3.9.1",
+    "gulp-docco": "0.0.4",
+    "gulp-mocha": "^3.0.1",
+    "gulp-nodemon": "^2.1.0",
+    "standard": "^8.1.0"
   }
 }
