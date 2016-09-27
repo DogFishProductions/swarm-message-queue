@@ -43,12 +43,18 @@
   },
   "apiEndpoints": {
     "requester": {
-      "path": "/requester",
-      "method": "get",
-      "handler": {
+      "handlers": [{
         "service": "socket",
-        "method": "makeRequest"
-      }
+        "method": "makeRequest",
+        "path": "/requester/request",
+        "method": "get",
+      },
+      {
+        "service": "socket",
+        "method": "connect",
+        "path": "/requester/connect",
+        "method": "get",
+      }]
     }
   }
 }

@@ -23,7 +23,7 @@ Nconf.remove('file')
 Nconf.use('file', { file: process.cwd() + '/config/' + NodeEnv + '/config.json' })
 const Config = Nconf.stores.file.store
 
-ModuleLoader.loadModules({ modules: [Config.modules.apiEndpoints], parentKey: 'apiEndpoints' })
+ModuleLoader.loadModules({ modules: Config.modules.apiEndpoints, parentKey: 'apiEndpoints' })
 .done(
   (modules) => {
     const Spec = { app: App }
@@ -41,7 +41,7 @@ ModuleLoader.loadModules({ modules: [Config.modules.apiEndpoints], parentKey: 'a
     App.use(Morgan(NodeEnv))
     App.use(Express.static('public'))
     App.listen(Host.port, function () {
-      console.log('ready for action on: ' + Host.protocol + "//:" + Host.domain + ":" + Host.port)
+      console.log('[Server] ready for action on: ' + Host.protocol + "//:" + Host.domain + ":" + Host.port)
     })
 
     // simple endpoint test

@@ -19,12 +19,12 @@
     "requester": {
       "connection": {
         "protocol": "tcp",
-        "domain": "responder",
+        "domain": "localhost",
         "port": 5432
       },
       "processes": 3,
       "filename": "target.txt",
-      "timeout": 2000,
+      "timeout": 10000,
       "listenPort": 5678
     },
     "responder": {
@@ -43,12 +43,20 @@
   },
   "apiEndpoints": {
     "requester": {
-      "path": "/requester",
-      "method": "get",
-      "handler": {
-        "service": "socket",
-        "method": "makeRequest"
-      }
+      "handlers": [
+        {
+          "service": "socket",
+          "call": "makeRequest",
+          "path": "/requester",
+          "method": "get"
+        },
+        {
+          "path": "/socket",
+          "method": "get",
+          "service": "socket",
+          "call": "connect"
+        }
+      ]
     }
   }
 }

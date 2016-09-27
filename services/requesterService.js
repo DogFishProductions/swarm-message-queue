@@ -10,7 +10,6 @@ const APIEndpoint = require('./lib/apiEndpoint.js')
 // enable dynamic loading of modules
 const ModuleLoader = require('./lib/moduleLoader.js')
 const _ = require('lodash')
-const Util = require('util')
 
 /** @function
  *
@@ -30,10 +29,14 @@ const Util = require('util')
 module.exports = (spec) => {
   const Config = spec.config
   const EndpointName = spec.name
-  const EndpointHandler = Config.handler
+  const EndpointHandlers = Config.handlers
   const HandlerModules = {}
-  HandlerModules[EndpointHandler.service] = Config.modules.services[EndpointHandler.service]
-  let handler
+  let currentHandler
+  for (let i = 0; i < EndpointHandlers.length; i++) {
+    currentHandler = EndpointHandlers[i]
+    HandlerModules[currentHandler.service] = Config.modules.services[currentHandler.service]
+  }
+  const Handlers = {}
 
   let that = APIEndpoint(spec)
 
@@ -53,15 +56,19 @@ module.exports = (spec) => {
     return [req.query.url]
   }
 
-  ModuleLoader.loadModules({ modules: [HandlerModules], parentKey: 'services' })
+  ModuleLoader.loadModules({ modules: HandlerModules, parentKey: 'services' })
   .done(
     (modules) => {
-      _.forOwn(modules.services, (value, key) => {
-        if (key && (key === EndpointHandler.service)) {
-          handler = value(Config.services[key].connection)
-          that.addHandler(handler[EndpointHandler.method])
+      let currentModule, currentService
+      for (let i = 0; i < EndpointHandlers.length; i++) {
+        currentHandler = EndpointHandlers[i]
+        currentService = currentHandler.service
+        currentModule = modules.services[currentService]
+        if (!Handlers[currentService]) {
+          Handlers[currentService] = currentModule(Config.services[currentService].connection)
         }
-      })
+        that.addHandler(Handlers[currentService][currentHandler.call], currentHandler.method, currentHandler.path)
+      }
     },
     (err) => {
       throw err

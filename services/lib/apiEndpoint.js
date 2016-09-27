@@ -31,8 +31,6 @@ module.exports = (spec) => {
   // make the object durable by setting a private state
   const Config = spec.config
   const App = spec.app
-  const Method = (Config.method ? Config.method.toLowerCase() : '')
-  const path = Config.host.apiPathPrefix + Config.path
 
   let that = {}
 
@@ -44,13 +42,15 @@ module.exports = (spec) => {
    *  @since 1.0.0
    *
    *  @param  {Function}  handler - The name of the connector to use (must match a key in the config).
+   *  @param  {Function}  method - The HTTP method used to connect (e.g. 'get', 'post', 'put', 'del').
+   *  @param  {Function}  path - The relative URL of the endpoint.
    *
    *  @returns  {Object} The APIEndpoint.
    */
-  that.addHandler = function (handler) {
+  that.addHandler = function (handler, method, path) {
     // make sure the method is valid
-    if (ValidMethods.indexOf(Method) >= 0) {
-      App[Method](path, (req, res) => {
+    if (ValidMethods.indexOf(method) >= 0) {
+      App[method](Config.host.apiPathPrefix + path, (req, res) => {
         // pass the parameters to the subclass so that they have access to the
         // request and response
         let params = that.getParams(req, res)
@@ -58,6 +58,7 @@ module.exports = (spec) => {
         handler(...params)
         .done(
           (result) => {
+            console.log('json results received')
             res.json(result)
           },
           (err) => {
@@ -66,7 +67,7 @@ module.exports = (spec) => {
         )
       })
     } else {
-      throw new Error('API Endpoint at "' + path + '" does not understand method "' + Method + '"')
+      throw new Error('API Endpoint at "' + path + '" does not understand method "' + method + '"')
     }
     // allow for cascade
     return that

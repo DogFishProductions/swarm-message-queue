@@ -17,8 +17,7 @@ module.exports = (spec) => {
   let mqName = spec.mqName
   modules[mqName] = spec.modules.services[mqName]
   let mq
-  // add parent key here.........................................
-  ModuleLoader.loadModules({ modules: [modules] })
+  ModuleLoader.loadModules({ modules: modules })
   .done(
     (modules) => {
       spec.modules = modules

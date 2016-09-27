@@ -11,6 +11,7 @@
 const Fs = require('fs')
 const Q = require('q')
 const Modules = {}
+const _ = require('lodash')
 const Util = require('util')
 
 /** @function
@@ -31,16 +32,12 @@ module.exports.loadModules = (spec) => {
   const Kvps = spec.modules || []
   const ParentKey = spec.parentKey
   Q.all(
-    Kvps.map(
+    _.toPairs(Kvps).map(
       (kvp) => {
         const Deferred = Q.defer()
-        let name, path
         // assume only ever one key-value pair in each element of the argument array (error capture here)
-        for (name in kvp) {
-          if (kvp.hasOwnProperty(name)) {
-            path = process.cwd() + kvp[name]
-          }
-        }
+        let name = kvp[0]
+        let path = process.cwd() + kvp[1]
         if (path) {
           // make sure path is a reference to a file
           Q.nfcall(Fs.lstat, path)
@@ -49,8 +46,10 @@ module.exports.loadModules = (spec) => {
               if (stat.isFile()) {
                 if (ParentKey) {
                   Modules[ParentKey] = Modules[ParentKey] || {}
-                  Modules[ParentKey][name] = require(path)
-                } else {
+                  if (!Modules[ParentKey][name]) {
+                    Modules[ParentKey][name] = require(path)
+                  }
+                } else if (!Modules[name]) {
                   Modules[name] = require(path)
                 }
                 Deferred.resolve(path)
