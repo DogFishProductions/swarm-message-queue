@@ -20,7 +20,7 @@
     "requester": {
       "connection": {
         "protocol": "tcp",
-        "domain": "localhost",
+        "domain": "responder",
         "port": 5432
       },
       "processes": 3,
@@ -38,7 +38,7 @@
     "socket": {
       "connection": {
         "port": 5678,
-        "host": "localhost"
+        "host": "requester"
       }
     }
   },

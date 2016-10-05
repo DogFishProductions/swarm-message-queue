@@ -6,25 +6,34 @@
  * DESCRIPTION
  */
 
+// third-party modules
 const _ = require('lodash')
+const Winston = require('winston')
+
+// my modules
 // enable dynamic loading of modules
 const ModuleLoader = require('./lib/moduleLoader.js')
-const Services = []
+const Services = {}
 
 module.exports = (spec) => {
   let that = {}
   let modules = {}
   let mqName = spec.mqName
+
+  Winston.level = spec.logLevel || 'info'
+
   modules[mqName] = spec.modules.services[mqName]
-  let mq
+  let mq, newSpec
   ModuleLoader.loadModules({ modules: modules })
   .done(
     (modules) => {
       spec.modules = modules
       _.forOwn(modules, (value, key) => {
         if (key && (key === mqName)) {
-          mq = value(spec.services[key])
-          Services.push(mq)
+          newSpec = spec.services[key]
+          newSpec.logLevel = spec.logLevel
+          mq = value(newSpec)
+          Services[mqName] = mq
         }
       })
     },
@@ -32,9 +41,8 @@ module.exports = (spec) => {
       throw err
     }
   )
-  Object.defineProperty(that, 'mq', {
-    get: () => {
-      return mq
-    }
-  })
+  
+  that.getMq = function (name) {
+    return Services[name]
+  }
 }

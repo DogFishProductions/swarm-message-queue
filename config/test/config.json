@@ -1,5 +1,5 @@
 {
-  "logLevel": "info",
+  "logLevel": "error",
   "host": {
     "protocol": "http",
     "domain": "localhost",
@@ -20,7 +20,7 @@
     "requester": {
       "connection": {
         "protocol": "tcp",
-        "domain": "localhost",
+        "domain": "test",
         "port": 5432
       },
       "processes": 3,

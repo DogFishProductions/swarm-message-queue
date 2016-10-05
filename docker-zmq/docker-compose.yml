@@ -1,0 +1,56 @@
+version: '2'
+
+services:
+ requester:
+  build: .
+  volumes:
+   - $PWD/..:/home/dogfish/app
+  networks:
+   - zerobridge
+  command: sh ./shell/scripts/startup.sh ${NODE_ENV} ./services/requesterManager.js target.txt
+
+ responder:
+  extends:
+   service: requester
+  command: sh ./shell/scripts/startup.sh ${NODE_ENV} ./services/responderManager.js
+
+ responder-cluster:
+  extends:
+   service: requester
+  networks:
+   zerobridge:
+    aliases:
+     - responder
+  command: sh ./shell/scripts/startup.sh responder-cluster.js
+
+ server:
+  extends:
+   service: requester
+  ports:
+   - "3000:3000"
+  depends_on:
+   - responder
+   - requester
+  command: sh ./shell/scripts/startup.sh ${NODE_ENV} ./services/server.js
+
+ debug:
+  extends:
+    service: requester
+  ports:
+   - "3000:3000"
+   - "9229:9229"
+  depends_on:
+   - responder
+   - requester
+  command: sh ./shell/scripts/startup-debug.sh ${NODE_ENV} ./services/server.js
+
+ test:
+  extends:
+    service: requester
+  ports:
+   - "3000:3000"
+   - "9229:9229"
+  command: sh ./shell/scripts/startup.sh ${NODE_ENV}
+
+networks:
+ zerobridge:

@@ -30,6 +30,8 @@ USER dogfish
 RUN npm config set prefix '~/.npm-global' &&\
     source /home/dogfish/.profile &&\
     npm install -g npm &&\
+    npm install -g nodemon &&\
+    npm config set python /usr/bin/python &&\
     npm cache clear
 
 WORKDIR /home/dogfish/app

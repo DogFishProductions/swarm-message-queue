@@ -2,6 +2,8 @@
 
 'use strict'
 
+const Winston = require('winston')
+
 /**
  * A superclass for API endpoints. Defines common methods and parameters.
  */
@@ -31,6 +33,7 @@ module.exports = (spec) => {
   // make the object durable by setting a private state
   const Config = spec.config
   const App = spec.app
+  Winston.level = spec.logLevel || 'info'
 
   let that = {}
 
@@ -58,11 +61,11 @@ module.exports = (spec) => {
         handler(...params)
         .done(
           (result) => {
-            console.log('json results received')
+            Winston.log('debug', '[APIEndpoint] json results received:', result)
             res.json(result)
           },
           (err) => {
-            res.status(500).send({ 'Exception': err.toString() })
+            res.status(500).send(err)
           }
         )
       })

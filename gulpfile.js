@@ -1,6 +1,7 @@
 const Gulp = require('gulp')
 const Nodemon = require('gulp-nodemon')
 const Docco = require('gulp-docco')
+const Mocha = require('gulp-mocha');
 
 const GetOption = (name) => {
   let i = process.argv.indexOf('--' + name)
@@ -42,3 +43,18 @@ Gulp.task('annotate', function () {
     .pipe(Docco())
     .pipe(gulp.dest('./doc'))
 })
+
+Gulp.task('test', function() {
+  return Gulp.src(['tests/requester.test.js'], { read: false })
+    .pipe(Mocha({
+      reporter: 'spec',
+      timeout: 10000
+    }))
+    .once('error', (err) => {
+      console.log('[Gulp] error:', err)
+      process.exit(1);
+    })
+    .once('end', () => {
+      process.exit();
+    })
+});

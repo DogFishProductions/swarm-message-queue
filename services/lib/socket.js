@@ -5,7 +5,7 @@
 const Net = require('net')
 const Q = require('q')
 const Uuid = require('node-Uuid')
-const Util = require('util')
+const Winston = require('winston')
 
 module.exports = (spec) => {
   const Deferreds = {}
@@ -13,41 +13,54 @@ module.exports = (spec) => {
   const Port = spec.port
   let that = {}
   let client = new Net.Socket()
+  let connected = false
   let deferred // this one's for establishing connections only
 
+  Winston.level = spec.logLevel || 'info'
+
   that.connect = () => {
-    deferred = Q.defer() // this one's for establishing connections only
-    client.connect(Port, Host, () => {
-      console.log('client connected to ' + Port + ' on ' + Host)
-      deferred.resolve('Socket connected to: ' + Port + ' on ' + Host)
-    })
+    deferred = Q.defer()
+    if (!connected) {
+      client.connect(Port, Host, () => {
+        connected = true
+        Winston.log('info', '[Socket] client connected:', { host: Host, port: Port})
+        deferred.resolve({ connected: true, msg: 'Socket connected to: ' + Port + ' on ' + Host })
+      })
+    } else {
+      deferred.resolve({ connected: true, msg: 'Socket connected to: ' + Port + ' on ' + Host })
+    }
     return deferred.promise
   }
 
   client.on('data', (data) => {
-    console.log('Socket client received: ' + data)
+    Winston.log('debug', '[Socket] client received:', { data: data })
     const response = JSON.parse(data)
-    const Id = response.requestId
-    Deferreds[Id].resolve(response.msg)
-    delete Deferreds[Id]
+
+    for (let i = 0; i < response.msg.length; i++) {
+      const Id = Object.keys(response.msg[i])[0]
+      Deferreds[Id].resolve(response.msg[i][Id])
+      delete Deferreds[Id]
+    }
   })
 
   client.on('close', () => {
-    console.log('Socket closed')
+    connected = false
+    Winston.log('debug', '[Socket] closed.')
   })
 
   client.on('end', () => {
-    console.log('Socket ended')
+    connected = false
+    Winston.log('debug', '[Socket] ended.')
   })
 
   client.on('timeout', () => {
-    console.log('Socket timed out')
+    Winston.log('warn', '[Socket] timed out.')
   })
 
   client.on('error', (err) => {
-    console.log('Socket error: ' + err)
+    Winston.log('error', '[Socket] error:', { err: err })
     if (deferred) {
-      deferred.reject(err)
+      deferred.reject({ connected: false, msg: err })
       deferred = null
     }
   })
@@ -60,7 +73,7 @@ module.exports = (spec) => {
       client.write(DeferredId)
     }
     else {
-      let err = 'There\'s a problem with the client socket: '
+      let err = '[Socket] There\'s a problem with the client socket: '
       if (!client._handler) {
         err += 'There\'s no handler; '
       }

@@ -4,39 +4,69 @@
 
 const Fs = require('fs')
 const Zmq = require('Zmq')
-const Responder = Zmq.socket('rep')
-const Util = require('util')
+const Winston = require('winston')
+
+// we define this here so that it can be rewired during test
+// rewire doesn't allow us to override const values, so this has to be a let (even though the value will not change)
+let Responder = Zmq.socket('rep')
 
 module.exports = (spec) => {
   let that = {}
   let delay
+  Winston.level = spec.logLevel || 'info'
 
-  // handle incoming requests
+  // handle incoming requests and applies a random delay to the response to simulate
+  // work being done synchronously by a remote task
   Responder.on('message', (data) => {
     // parse incoming message
     let request = JSON.parse(data)
-    console.log('[Responder] received request from: ' + request.requesterId + ' with messageId: ' + request.messageId + ' to get: ' + request.path)
+    Winston.log('debug', '[Responder] received request:', {
+      requesterId: request.requesterId,
+      messageId: request.messageId,
+      filename: request.filename
+    })
     // simulate time taken to do something before Responding
     delay = setTimeout(Respond, RandomTime(1000, 2000), request)
   })
 
+  /** @function Respond
+   *
+   *  @summary  Responds to a request from requester(s).
+   *
+   *  @since 1.0.0
+   *
+   *  @param  {Object}  request - The request.
+   *  @param  {String}  request.filename - The name of the file whose contents are to be returned to the requester.
+   *  @param  {UUID}    request.requestId - The UUID of the socket request that initiated this request.
+   *  @param  {UUID}    request.requesterId - The UUID of the worker that made this request.
+   *  @param  {UUID}    request.messageId - The UUID of the message created by the requesting worker.
+   *  @param  {UUID}    request.requestedAt - The datetime at which the worker request originated.
+   *
+   *  @returns  {Object} A Promise.
+   */
   const Respond = (request) => {
     // read file and reply with content
-    Fs.readFile(request.path, (err, content) => {
-      let result = content.toString()
+    Fs.readFile(request.filename, (err, content) => {
+      let result, type
       if (err) {
         result = err
+        type = 'Error'
+      } else {
+        result = content.toString()
+        type = 'Response'
       }
-      console.log('[Responder] sending response');
-      Responder.send(JSON.stringify({
+      let response = JSON.stringify({
         requestId: request.requestId,
         requesterId: request.requesterId,
         messageId: request.messageId,
-        content: result,
-        requestedAt: request.at,
+        body: result,
+        requestedAt: request.requestedAt,
         respondedAt: Date.now(),
-        responderPid: process.pid
-      }))
+        responderId: process.pid,
+        responseType: type
+      })
+      Winston.log('debug', '[Responder] sending response:', response);
+      Responder.send(response)
     })
     clearTimeout(delay)
   }
@@ -69,12 +99,12 @@ module.exports = (spec) => {
   let connection = spec.connection
   Responder.bind(connection.protocol + '://' + connection.domain + ':' + connection.port, () => {
     // should handle errors here...
-    console.log('[Responder] listening for Zmq requesters on: ' + connection.protocol + '://' + connection.domain + ':' + connection.port + '...')
+    Winston.log('info', '[Responder] listening for Zmq requesters:', { protocol: connection.protocol, domain: connection.domain, port: connection.port })
   })
 
   // close the reponder when the Node process ends
   process.on('SIGINT', () => {
-    console.log('[Responder] shutting down...')
+    Winston.log('info', '[Responder] shutting down...')
     Responder.close()
   })
 

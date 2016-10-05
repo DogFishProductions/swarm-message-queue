@@ -1,0 +1,159 @@
+<html>
+  <head>
+    <title>Swarm test</title>
+    <script src="/scripts/observer.js">
+    </script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.4.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="/css/default.css">
+  </head>
+  <body>
+    <div class="buttons div-table">
+      <div class="div-table-row">
+        <div class="div-table-col">
+          <div class="div-table-cell">
+            <button id="connectButton" class="button" onclick="connect()">Connect</button>
+          </div>
+        </div>
+        <div class="div-table-col">
+          <div class="div-table-cell">
+            <button id="requestButton" class="button" onclick="request()" disabled>Request</button>
+          </div>
+        </div>
+        <div class="div-table-col">
+          <div class="div-table-cell">
+            <div id="spinner" class="spinner">
+              <div class="bounce1"></div>
+              <div class="bounce2"></div>
+              <div class="bounce3"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="card">
+      <div class="card centered">
+        <div class="container cardHeader">
+          <div id="name">Responses</div>
+        </div>
+        <div class="container" id="responses">
+        </div>
+      </div>
+    </div>
+
+    <div id="error"></div>
+
+    <script type="text/javascript">
+      var o = Observer
+      var connectionProvider, responseProvider
+
+      var observeConnection = function () {
+        connectionProvider = o.observable({ connection: { connected: false, msg: '' } })
+        var connectButton = document.getElementById('connectButton')
+        var requestButton = document.getElementById('requestButton')
+        o.observe(function () {
+          // assign this handler function to the tickerCodes property
+          var connectionProperty = connectionProvider.connection
+          if (connectionProperty.connected) {
+            connectButton.setAttribute('disabled', true)
+            requestButton.removeAttribute('disabled')
+          } else {
+            connectButton.removeAttribute('disabled')
+            requestButton.setAttribute('disabled', true)
+          }
+        })
+      }
+      observeConnection()
+
+      function connect() {
+        var xhttp = new XMLHttpRequest()
+        var error = document.getElementById('error')
+        var spinner = document.getElementById('spinner')
+        spinner.style.visibility = "visible"
+        let response
+        error.style.visibility = "hidden"
+        xhttp.onreadystatechange = function() {
+          if (this.readyState == 4) {
+            response = JSON.parse(this.responseText)
+            connectionProvider.connection = response
+            if (this.status >= 500) {
+              var error = document.getElementById('error')
+              error.innerHTML = JSON.stringify(response.msg)
+              error.style.visibility = "visible"
+            }
+            spinner.style.visibility = "hidden"
+          }
+        };
+        xhttp.open("GET", "/api/v1/connect", true)
+        xhttp.setRequestHeader('Content-Type', 'application/json')
+        xhttp.send();
+      }
+
+      var observeResponse = function () {
+        responseProvider = o.observable({ responses: [] })
+        var responses = document.getElementById('responses')
+        o.observe(function () {
+          // assign this handler function to the stockPrice property
+          var responsesProperty = responseProvider.responses
+          if (responsesProperty.length > 0) {
+            var card = document.getElementById('card')
+            card.style.visibility = "visible"
+            var currentResponse, currentKey, currentResult
+            var insertedHTML = '<div class="div-table">\
+                  <div class="div-table-row">'
+            for (var i = 0; i < responsesProperty.length; i++) {
+              currentResponse = responsesProperty[i]
+              for (var j = 0; j < Object.keys(currentResponse).length; j++) {
+                currentKey = Object.keys(currentResponse)[j]
+                for (var k = 0; k < currentKey.length; k++) {
+                  currentResult = currentKey[k]
+                  insertedHTML += '<div class="div-table-col">\
+                    <div class="div-table-cell">\
+                      <ul>\
+                        <li>Requester Id: ' + currentResult.requesterId + '</li>\
+                        <li>Responder Id: ' + currentResult.responderPid + '</li>\
+                        <li>Message Id: ' + currentResult.messageId + '</li>\
+                        <li>Content: ' + currentResult.content + '</li>\
+                        <li>Delay: ' + (currentResult.respondedAt - currentResult.requestedAt) + '</li>\
+                    </div>\
+                  </div>'
+                }
+
+              }    
+            }
+            insertedHTML += '</div>\
+              </div>'
+            responses.innerHTML += insertedHTML;
+          }
+        })
+      }
+      observeResponse()
+
+      function request() {
+        var xhttp = new XMLHttpRequest()
+        var error = document.getElementById('error')
+        var spinner = document.getElementById('spinner')
+        spinner.style.visibility = "visible"
+        let response
+        error.style.visibility = "hidden"
+        xhttp.onreadystatechange = function() {
+          if (this.readyState == 4) {
+            response = JSON.parse(this.responseText)
+            if (this.status >= 500) {
+              var error = document.getElementById('error')
+              error.innerHTML = JSON.stringify(response.msg)
+              error.style.visibility = "visible"
+            } else {
+              responseProvider.responses = response
+            }
+            spinner.style.visibility = "hidden"
+          }
+        };
+        xhttp.open("GET", "/api/v1/request", true)
+        xhttp.setRequestHeader('Content-Type', 'application/json')
+        xhttp.send();
+      }
+    </script>
+
+  </body>
+</html>

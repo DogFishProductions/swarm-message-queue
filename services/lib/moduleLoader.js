@@ -12,7 +12,7 @@ const Fs = require('fs')
 const Q = require('q')
 const Modules = {}
 const _ = require('lodash')
-const Util = require('util')
+const Winston = require('winston')
 
 /** @function
  *
@@ -29,8 +29,9 @@ const Util = require('util')
  */
 module.exports.loadModules = (spec) => {
   const Result = Q.defer()
-  const Kvps = spec.modules || []
   const ParentKey = spec.parentKey
+  const Kvps = spec.modules || []
+  Winston.level = spec.logLevel || 'info'
   Q.all(
     _.toPairs(Kvps).map(
       (kvp) => {
@@ -44,6 +45,7 @@ module.exports.loadModules = (spec) => {
           .done(
             (stat) => {
               if (stat.isFile()) {
+                Winston.log('silly', 'Loading module', { path: path })
                 if (ParentKey) {
                   Modules[ParentKey] = Modules[ParentKey] || {}
                   if (!Modules[ParentKey][name]) {

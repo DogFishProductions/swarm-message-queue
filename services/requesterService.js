@@ -10,6 +10,7 @@ const APIEndpoint = require('./lib/apiEndpoint.js')
 // enable dynamic loading of modules
 const ModuleLoader = require('./lib/moduleLoader.js')
 const _ = require('lodash')
+const Winston = require('winston')
 
 /** @function
  *
@@ -27,6 +28,7 @@ const _ = require('lodash')
  *  @returns  {Object} The APIEndpoint.
  */
 module.exports = (spec) => {
+  Winston.level = spec.logLevel || 'info'
   const Config = spec.config
   const EndpointName = spec.name
   const EndpointHandlers = Config.handlers
@@ -40,22 +42,6 @@ module.exports = (spec) => {
 
   let that = APIEndpoint(spec)
 
-  /** @function getParams
-   *
-   *  @summary Overrided the default implementation. Returns the url
-   *           parameter from the request query string.
-   *
-   *  @since 1.0.0
-   *
-   *  @param  {Object}  req - The request object.
-   *  @param  {Object}  res - The response object.
-   *
-   *  @returns  {Object} The APIEndpoint.
-   */
-  that.getParams = function (req, res) {
-    return [req.query.url]
-  }
-
   ModuleLoader.loadModules({ modules: HandlerModules, parentKey: 'services' })
   .done(
     (modules) => {
@@ -65,7 +51,9 @@ module.exports = (spec) => {
         currentService = currentHandler.service
         currentModule = modules.services[currentService]
         if (!Handlers[currentService]) {
-          Handlers[currentService] = currentModule(Config.services[currentService].connection)
+          let newSpec = Config.services[currentService].connection
+          newSpec.logLevel = Winston.level
+          Handlers[currentService] = currentModule(newSpec)
         }
         that.addHandler(Handlers[currentService][currentHandler.call], currentHandler.method, currentHandler.path)
       }
