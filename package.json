@@ -29,7 +29,7 @@
     "docker:start:server": "cd docker-zmq && echo \"NODE_ENV=$npm_package_config_node_env\" > .env && docker-compose start server",
     "docker:stop": "cd docker-zmq && docker-compose stop",
     "test": "cd docker-zmq && echo \"NODE_ENV=test\" > .env && docker-compose up test",
-    "lint": "standard 'services/**/*.js' 'public/**/*.js' --fix",
+    "lint": "standard 'services/**/*.js' 'public/**/*.js' 'tests/lib/*.js' --fix",
     "annotate": "gulp annotate"
   },
   "keywords": [
@@ -59,9 +59,8 @@
     "gulp-docco": "0.0.4",
     "gulp-mocha": "^3.0.1",
     "gulp-nodemon": "^2.1.0",
-    "mitm": "^1.3.1",
     "rewire": "^2.5.2",
-    "sinon": "^1.17.6",
-    "standard": "^8.1.0"
+    "standard": "^8.1.0",
+    "validator": "^6.0.0"
   }
 }

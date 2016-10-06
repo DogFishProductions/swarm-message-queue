@@ -10,7 +10,6 @@
 const Express = require('express')
 const Morgan = require('morgan')
 const App = Express()
-const Nconf = require('nconf')
 const _ = require('lodash')
 const Winston = require('winston')
 
@@ -20,14 +19,6 @@ const Config = require('../services/lib/configurationManager.js')().config
 // enable dynamic loading of modules
 const ModuleLoader = require('./lib/moduleLoader.js')
 
-/*
-// get the appropriate configuration file
-Nconf.env()
-// err on the safe side and assume default of 'development' rather than 'production'
-const NodeEnv = Nconf.get('NODE_ENV') || 'development'
-Nconf.remove('file')
-Nconf.use('file', { file: process.cwd() + '/config/' + NodeEnv + '/config.json' })
-const Config = Nconf.stores.file.store//*/
 Winston.level = Config.logLevel || 'info'
 
 ModuleLoader.loadModules({ modules: Config.modules.apiEndpoints, parentKey: 'apiEndpoints', logLevel: Winston.level })
@@ -46,7 +37,7 @@ ModuleLoader.loadModules({ modules: Config.modules.apiEndpoints, parentKey: 'api
         value(Spec)
       }
     })
-    App.use(Morgan(NodeEnv))
+    App.use(Morgan(Config.NodeEnv))
     App.use(Express.static('public'))
     App.listen(Host.port, function () {
       Winston.log('info', '[Server] ready for action.', {

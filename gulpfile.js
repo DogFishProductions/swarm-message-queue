@@ -45,7 +45,7 @@ Gulp.task('annotate', function () {
 })
 
 Gulp.task('test', function() {
-  return Gulp.src(['tests/requester.test.js'], { read: false })
+  return Gulp.src(['tests/*.test.js'], { read: false })
     .pipe(Mocha({
       reporter: 'spec',
       timeout: 10000

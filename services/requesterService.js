@@ -6,11 +6,12 @@
  * An API Endpoint for returning a single responder
  */
 
-const APIEndpoint = require('./lib/apiEndpoint.js')
-// enable dynamic loading of modules
-const ModuleLoader = require('./lib/moduleLoader.js')
-const _ = require('lodash')
+// third-party modules
 const Winston = require('winston')
+
+// my modules
+const APIEndpoint = require('./lib/apiEndpoint.js')
+const ModuleLoader = require('./lib/moduleLoader.js')
 
 /** @function
  *
@@ -30,7 +31,7 @@ const Winston = require('winston')
 module.exports = (spec) => {
   Winston.level = spec.logLevel || 'info'
   const Config = spec.config
-  const EndpointName = spec.name
+//  const EndpointName = spec.name
   const EndpointHandlers = Config.handlers
   const HandlerModules = {}
   let currentHandler

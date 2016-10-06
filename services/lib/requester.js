@@ -10,7 +10,7 @@ const Cluster = require('cluster')
 const Zmq = require('Zmq')
 const Uuid = require('node-Uuid')
 const Q = require('q')
-//const Net = require('net')
+// const Net = require('net')
 const _ = require('lodash')
 const Winston = require('winston')
 
@@ -46,7 +46,7 @@ module.exports = (spec) => {
           FormattedResponseEnvelope[CurrentResponse.requestId] = []
         }
         _.forOwn(CurrentResponse, (value, key) => {
-          if (key != 'requestId') {
+          if (key !== 'requestId') {
             FormattedResponse[key] = value
           }
         })
@@ -61,7 +61,7 @@ module.exports = (spec) => {
     }
 
     // listen on a socket
-    const Server = Net.createServer((connection) => {
+    Net.createServer((connection) => {
       Winston.log('info', '[Requester:Master] socket subscriber listening:', { port: port })
       connection.uuid = Uuid.v4()
       Connections[connection.uuid] = connection
@@ -75,7 +75,7 @@ module.exports = (spec) => {
       // listen for data arriving at port
       connection.on('data', (data) => {
         Winston.log('debug', '[Requester:Master] received data from socket:', { requestId: data.toString() })
-        that.makeRequest(data.toString())
+        MakeRequest(data.toString())
         .done(
           (results) => {
             connection.write(results)
@@ -101,21 +101,13 @@ module.exports = (spec) => {
      *            passed from the Master originator to worker, from the worker to the responder, and back again.
      *            This allows us to link log messages related to a particular request.
      *
-     *            Note: This is defined as a public method in order to make testing easier - it makes it possible
-     *            to trigger message sending without having to communicate via a socket which would, in turn, require
-     *            creation of a mock socket in the unit tests which is almost the same as our socket service. This is
-     *            considered to be a valid approach since it is a pragmatic response to a difficult situation. It is
-     *            unlikely that this method would ever be called directly by anything other than the socket input since
-     *            this object will almost always be created in a separate container, making it unreachable any other way.
-     *            Even if it is called directly there's no real harm done.
-     *
      *  @since 1.0.0
      *
      *  @param  {Function}  requestId - The UUID of the request.
      *
      *  @returns  {Object} A Promise.
      */
-    that.makeRequest = (requestId) => {
+    const MakeRequest = (requestId) => {
       let worker
       const Result = Q.defer()
       // get requesters to fire processes in parallel
@@ -140,7 +132,7 @@ module.exports = (spec) => {
     }
 
     // fork worker processes
-    for (let i = 0; i < NoProc; i++) { 
+    for (let i = 0; i < NoProc; i++) {
       let worker = Cluster.fork()
       worker.on('message', (msg) => {
         Winston.log('debug', '[Requester:Master] response from worker:', msg)
@@ -159,7 +151,6 @@ module.exports = (spec) => {
       })
     }
   } else {
-    const Nconf = require('nconf')
     const RequesterId = Uuid.v4()
     const Timeouts = {}
 

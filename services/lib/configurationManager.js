@@ -7,14 +7,16 @@
  */
 
 const Nconf = require('nconf')
+const Path = require('path')
 
 // get the appropriate configuration file
 Nconf.env()
 // err on the safe side and assume default of 'development' rather than 'production'
 const NodeEnv = Nconf.get('NODE_ENV') || 'development'
 Nconf.remove('file')
-Nconf.use('file', { file: process.cwd() + '/config/' + NodeEnv + '/config.json' })
+Nconf.use('file', { file: Path.join(process.cwd(), '/config/', NodeEnv, '/config.json') })
 const Config = Nconf.stores.file.store
+Config.NodeEnv = NodeEnv
 
 module.exports = (spec) => {
   let that = {}

@@ -10,7 +10,6 @@
 // third-party modules
 const Winston = require('winston')
 const Rewire = require('rewire')
-const _ = require('lodash')
 const EventEmitter = require('events').EventEmitter
 
 // my modules
@@ -24,7 +23,7 @@ const RequesterModule = Rewire('../../services/lib/requester.js')
  * @class
  */
 class MockZmqRequester extends EventEmitter {
-  constructor() {
+  constructor () {
     super()
   }
 
@@ -61,7 +60,7 @@ class MockZmqRequester extends EventEmitter {
       body: 'This is a mock response',
       requestedAt: jsonData.requestedAt,
       respondedAt: Date.now(),
-      responderId: 'ResponderId',
+      responderId: 123,
       responseType: 'Response'
     })
     Winston.log('debug', '[MockZmqRequester] Response data:', responseData)
@@ -74,7 +73,7 @@ class MockZmqRequester extends EventEmitter {
  * @class
  */
 class MockNetServer extends EventEmitter {
-  constructor(connection) {
+  constructor (connection) {
     super()
     this.connection = connection
   }
@@ -112,7 +111,7 @@ class MockNetServer extends EventEmitter {
  * @class
  */
 class MockNetConnection extends EventEmitter {
-  constructor() {
+  constructor () {
     super()
   }
 
@@ -155,7 +154,7 @@ const RequesterConf = Config.services.requester
 RequesterConf.logLevel = Winston.level
 
 // now instantiate the module to be tested
-const Requester = RequesterModule(RequesterConf)
+RequesterModule(RequesterConf)
 
 // This will send a message once for the cluster master and once for each worker.
 // The cluster master regards it's containing process to be the test which forked this script, so the

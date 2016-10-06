@@ -32,7 +32,8 @@
       "connection": {
         "protocol": "tcp",
         "domain": "*",
-        "port": 5432
+        "port": 5432,
+        "stable": true
       }
     },
     "socket": {

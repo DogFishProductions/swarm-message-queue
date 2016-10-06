@@ -65,7 +65,7 @@ module.exports = (spec) => {
         responderId: process.pid,
         responseType: type
       })
-      Winston.log('debug', '[Responder] sending response:', response);
+      Winston.log('debug', '[Responder] sending response:', response)
       Responder.send(response)
     })
     clearTimeout(delay)
@@ -81,26 +81,36 @@ module.exports = (spec) => {
    *
    *  @returns  {boolean}  'true' if value is a number, 'false' otherwise.
    */
-  const isNumber = function(n) {
-    return !Array.isArray(n) && !isNaN(parseFloat(n)) && isFinite(n);
+  const isNumber = function (n) {
+    return !Array.isArray(n) && !isNaN(parseFloat(n)) && isFinite(n)
   }
 
   const RandomTime = (min, max) => {
     // set default values if necessary
-    var minimum = (isNumber(min) ? min : 0);
-    var maximum = (isNumber(max) ? max : 1000);
+    var minimum = (isNumber(min) ? min : 0)
+    var maximum = (isNumber(max) ? max : 1000)
     if (minimum >= maximum) {
-      minimum = maximum - 1;
+      minimum = maximum - 1
     }
-    return (Math.random() * (maximum - minimum)) + minimum;
+    return (Math.random() * (maximum - minimum)) + minimum
   }
 
   // listen on TCP port
   let connection = spec.connection
-  Responder.bind(connection.protocol + '://' + connection.domain + ':' + connection.port, () => {
-    // should handle errors here...
-    Winston.log('info', '[Responder] listening for Zmq requesters:', { protocol: connection.protocol, domain: connection.domain, port: connection.port })
-  })
+  let conn = connection.protocol + '://' + connection.domain
+  if (connection.port) {
+    conn = conn + ':' + connection.port
+  }
+  if (connection.stable) {
+    // if the responder is the most stable part of the connection it should bind...
+    Responder.bind(conn, () => {
+      // should handle errors here...
+      Winston.log('info', '[Responder] listening for Zmq requesters:', { protocol: connection.protocol, domain: connection.domain, port: connection.port })
+    })
+  } else {
+    // otherwise it should connect...
+    Responder.connect(conn)
+  }
 
   // close the reponder when the Node process ends
   process.on('SIGINT', () => {

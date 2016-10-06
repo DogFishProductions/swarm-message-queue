@@ -13,13 +13,14 @@
  */
 
 // third-party modules
-const Expect = require('chai').expect
+// const Expect = require('chai').expect
 const Winston = require('winston')
-const _ = require('lodash')
 const Fork = require('child_process').fork
-const Util = require('util')
+const Path = require('path')
+const Uuid = require('node-Uuid')
 
 // my modules
+const Validator = require('./lib/requestValidator.js')
 // configuration file
 const Config = require('../services/lib/configurationManager.js')().config
 Winston.level = Config.logLevel || 'info'
@@ -31,45 +32,23 @@ describe('Requester', function () {
 
   before(function (done) {
     // fork separate process to prevent cluster forking this test process
-    child = Fork(__dirname + '/lib/requesterChildProcess.js')
-    child.on('message', function(m) {
+    child = Fork(Path.join(__dirname, '/lib/requesterChildProcess.js'))
+    child.on('message', function (m) {
       Winston.log('debug', '[RequesterTest] received response:', m)
       if (m.response === 'workers ready') {
-          done()
+        done()
       }
     })
   })
 
-  describe('Correct Filename', function() {
-    it ('On making request should receive response', function (done) {
+  describe('Correct Filename', function () {
+    it('On making request should receive response', function (done) {
       // override previous message callback
-      child.on('message', function(data) {
+      child.on('message', function (data) {
         // the data we receive will be JSON because it comes directly from the 'makeRequest' method
-        Winston.log('debug', '[RequesterTest] received response:', data)
-        Expect(data).to.exist
-        Expect(data).to.not.be.empty
-        let currentMessages, currentMessage
-        for (let i = 0; i < data.length; i++) {
-          currentMessages = data[i]
-          Expect(currentMessages).to.not.be.empty
-          _.forOwn(currentMessages, (value, key) => {
-            Expect(key).to.equal('RequestId')
-            Expect(value).to.have.lengthOf(Config.services.requester.processes)
-            for (let j = 0; j < value.length; j++) {
-              currentMessage = value[j]
-              Expect(currentMessage.requesterId).to.exist
-              Expect(currentMessage.messageId).to.exist
-              Expect(currentMessage.requestedAt).to.exist
-              Expect(currentMessage.responderId).to.exist
-              Expect(currentMessage.respondedAt).to.exist
-              Expect(currentMessage.responseType).to.equal('Response')
-              Expect(currentMessage.body).to.exist
-            }
-          })
-        }
-        done()
+        Validator.validateRequest(data, done)
       })
-      child.send({ request: { requestId: 'RequestId', validFilename: true }, pid: child.pid })
+      child.send({ request: { requestId: Uuid.v4(), validFilename: true }, pid: child.pid })
     })
   })
 
@@ -79,4 +58,3 @@ describe('Requester', function () {
   })
 })
 
-  

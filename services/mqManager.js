@@ -41,7 +41,7 @@ module.exports = (spec) => {
       throw err
     }
   )
-  
+
   that.getMq = function (name) {
     return Services[name]
   }
