@@ -2,6 +2,11 @@
 
 'use strict'
 
+/**
+ * description
+ */
+
+// third-party modules
 const Fs = require('fs')
 const Zmq = require('Zmq')
 const Winston = require('winston')
@@ -10,10 +15,19 @@ const Winston = require('winston')
 // rewire doesn't allow us to override const values, so this has to be a let (even though the value will not change)
 let Responder = Zmq.socket('rep')
 
+// my modules
+const Common = require('./common.js')
+
 module.exports = (spec) => {
-  let that = {}
   let delay
   Winston.level = spec.logLevel || 'info'
+
+  // A mock implementation of Responder may be passed in by the
+  // code requiring this module. If so, use that implementation instead
+  // of ZMQ
+  if (spec.responder) {
+    Responder = spec.responder
+  }
 
   // handle incoming requests and applies a random delay to the response to simulate
   // work being done synchronously by a remote task
@@ -26,7 +40,8 @@ module.exports = (spec) => {
       filename: request.filename
     })
     // simulate time taken to do something before Responding
-    delay = setTimeout(Respond, RandomTime(1000, 2000), request)
+    delay = setTimeout(Respond, Common.randomInt(1000, 2000), request)
+
   })
 
   /** @function Respond
@@ -71,45 +86,15 @@ module.exports = (spec) => {
     clearTimeout(delay)
   }
 
-  /** @function isNumber
-   *
-   *  @summary  Checks whether a supplied parameter is a number or not.
-   *
-   *  @param    {number}  n - The value to be checked.
-   *
-   *  @since 1.0.0
-   *
-   *  @returns  {boolean}  'true' if value is a number, 'false' otherwise.
-   */
-  const isNumber = function (n) {
-    return !Array.isArray(n) && !isNaN(parseFloat(n)) && isFinite(n)
-  }
-
-  const RandomTime = (min, max) => {
-    // set default values if necessary
-    var minimum = (isNumber(min) ? min : 0)
-    var maximum = (isNumber(max) ? max : 1000)
-    if (minimum >= maximum) {
-      minimum = maximum - 1
-    }
-    return (Math.random() * (maximum - minimum)) + minimum
-  }
-
-  // listen on TCP port
-  let connection = spec.connection
-  let conn = connection.protocol + '://' + connection.domain
-  if (connection.port) {
-    conn = conn + ':' + connection.port
-  }
-  if (connection.stable) {
-    // if the responder is the most stable part of the connection it should bind...
-    Responder.bind(conn, () => {
+  if (spec.processes > 1) {
+    // responder is not the most stable part of the connection and should connect
+    Responder.connect(Common.createUrl(spec.dealer.connection))
+  } else {
+    // responder is the most stable part of the connection and should bind
+    Responder.bind(Common.createUrl(spec.connection), () => {
       // should handle errors here...
       Winston.log('info', '[Responder] listening for Zmq requesters:', { protocol: connection.protocol, domain: connection.domain, port: connection.port })
     })
-  } else {
-    // otherwise it should connect...
-    Responder.connect(conn)
   }
 
   // close the reponder when the Node process ends
@@ -117,6 +102,4 @@ module.exports = (spec) => {
     Winston.log('info', '[Responder] shutting down...')
     Responder.close()
   })
-
-  return that
 }

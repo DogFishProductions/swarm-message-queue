@@ -3,58 +3,75 @@
 'use strict'
 
 /**
- * Tests the behaviour of the requester module. The socket server and connection which receive incoming
- * requests in the cluster master are both replaced by mock objects.  Similarly, the responder which reacts
- * worker requests is replaced by a mock.
- *
- * It is necessary to fork a child process to run the requester under test. This is because the requester
- * itself forks worker processes using cluster, and if we were to run it in this process cluster would
- * fork not only the worker processes but this entire unit test which is not what we want.
+ * This child process is necessary to prevent the requester from forking the entire unit test with cluster.
+ * It uses 'rewire' to replace the zmq requester object with a mock which simulates its behaviour.
  */
 
 // third-party modules
-// const Expect = require('chai').expect
 const Winston = require('winston')
-const Fork = require('child_process').fork
-const Path = require('path')
-const Uuid = require('node-Uuid')
+const Rewire = require('rewire')
+const Util = require('util')
 
 // my modules
 const Validator = require('./lib/requestValidator.js')
+const Common = require('./lib/utilities.js')
+const MockZmqRequester = require('./lib/mockZmqRequester.js')
 // configuration file
 const Config = require('../services/lib/configurationManager.js')().config
-Winston.level = Config.logLevel || 'info'
+// 'rewire', not 'require', the requester so we can set our mock during testing
+const RequesterModule = Rewire('../services/lib/requester.js')
 
-let child
+const MZmqRequester = MockZmqRequester({ logLevel: Winston.level })
+// replace the zmq module with our mock
+RequesterModule.__set__('Requester', MZmqRequester)
+
+Winston.level = Config.logLevel || 'info'
+const RequesterConf = Config.services.requester
+RequesterConf.logLevel = Winston.level
+
+// now instantiate the module to be tested
+const Requester = RequesterModule(RequesterConf)
+
+let type, pendingDone
+
+const TestResponse = function (data) {
+  Winston.log('info', '[RequesterTest] JSON response data:', data)
+  Validator.validateJsonResponse(data, pendingDone, type)
+}
 
 describe('Requester', function () {
-  let ready = false
-
-  before(function (done) {
-    // fork separate process to prevent cluster forking this test process
-    child = Fork(Path.join(__dirname, '/lib/requesterChildProcess.js'))
-    child.on('message', function (m) {
-      Winston.log('debug', '[RequesterTest] received response:', m)
-      if (m.response === 'workers ready') {
-        done()
-      }
-    })
-  })
-
   describe('Correct Filename', function () {
-    it('On making request should receive response', function (done) {
-      // override previous message callback
-      child.on('message', function (data) {
-        // the data we receive will be JSON because it comes directly from the 'makeRequest' method
-        Validator.validateRequest(data, done)
-      })
-      child.send({ request: { requestId: Uuid.v4(), validFilename: true }, pid: child.pid })
+    it('On sending request should receive response', function (done) {
+      pendingDone = done
+      const NewMessage = Common.createJsonRequest(Config.services.requester.filename)
+      type = 'Response'
+      Requester.makeRequest(NewMessage)
+      .done(
+        function (response) {
+          TestResponse(response)
+        },
+        function (err) {
+          pendingDone(err)
+        }
+      )
     })
   })
 
-  after(function (done) {
-    child.kill()
-    done()
+  describe('Incorrect Filename', function () {
+    it('On sending request should receive error', function (done) {
+      pendingDone = done
+      const NewMessage = Common.createJsonRequest('incorrect filename')
+      type = 'Error'
+      MZmqRequester.type = type
+      Requester.makeRequest(NewMessage)
+      .done(
+        function (response) {
+          TestResponse(response)
+        },
+        function (err) {
+          pendingDone(err)
+        }
+      )
+    })
   })
 })
-

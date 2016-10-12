@@ -14,10 +14,16 @@ const Uuid = require('node-Uuid')
 
 // my modules
 const Validator = require('./lib/requestValidator.js')
+const Common = require('./lib/utilities.js')
 // configuration file
 const Config = require('../services/lib/configurationManager.js')().config
 // 'rewire', not 'require', the responder so we can set our mock during testing
 const SocketModule = Rewire('../services/lib/socket.js')
+
+// keep this mock as a class definition as it has to respond to 'New'.
+// We could do this by defining the class as below in an external file and using 
+// 'module.exports = MockNetSocket' but we then have no way of passing in the configuration
+// object or a suitable test handler. Much easier just to define it here.
 
 /**
  * Creates a Mock object to simulate a zmq responder
@@ -61,16 +67,8 @@ class MockNetSocket extends EventEmitter {
     const Response = []
     const Message = {}
     Message[data] = []
-    for (let i = 0; i < Config.services.requester.processes; i++) {
-      Message[data].push({
-        requesterId: Uuid.v4(),
-        messageId: Uuid.v4(),
-        body: 'This is a test',
-        requestedAt: Date.now(),
-        respondedAt: Date.now(),
-        responderId: process.pid,
-        responseType: 'Response'
-      })
+    for (let i = 0; i < Config.services['requester-cluster'].processes; i++) {
+      Message[data].push(Common.createJsonResponseMessage())
     }
     Response.push(Message)
     this.emit('data', JSON.stringify(Response))
@@ -95,7 +93,7 @@ describe('Socket', function () {
       Socket.makeRequest('this can be any string')
       .done(
         function (data) {
-          Validator.validateRequest(data, done)
+          Validator.validateJsonClusterResponse(data, done)
         },
         function (err) {
           done(err)

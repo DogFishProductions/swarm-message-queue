@@ -18,20 +18,20 @@ const Config = require('../../services/lib/configurationManager.js')().config
 Winston.level = Config.logLevel || 'info'
 
 // don't use arrow functions here as this will be passed to mocha which doesn't like them
-const ValidateRequest = function (data, cb) {
+const ValidateJsonClusterResponse = function (data, cb) {
   try {
     Expect(data).to.exist
     Expect(data).to.not.be.empty
-    let currentMessages, currentMessage
+    let currentResponses, currentResponse
     for (let i = 0; i < data.length; i++) {
-      currentMessages = data[i]
-      Expect(currentMessages).to.not.be.empty
-      _.forOwn(currentMessages, (value, key) => {
+      currentResponses = data[i]
+      Expect(currentResponses).to.not.be.empty
+      _.forOwn(currentResponses, (value, key) => {
         Expect(Validator.isUUID(key, 4)).to.be.true
-        Expect(value).to.have.lengthOf(Config.services.requester.processes)
+        Expect(value).to.have.lengthOf(Config.services['requester-cluster'].processes)
         for (let j = 0; j < value.length; j++) {
-          currentMessage = value[j]
-          InternalValidateMessage(currentMessage)
+          currentResponse = value[j]
+          InternalValidateJsonResponse(currentResponse)
         }
       })
     }
@@ -41,17 +41,17 @@ const ValidateRequest = function (data, cb) {
   }
 }
 
-const ValidateMessage = function (data, cb, type) {
+const ValidateJsonResponse = function (data, cb, type) {
   try {
-    InternalValidateMessage(data, type)
+    InternalValidateJsonResponse(data, type)
     cb()
   } catch (err) {
     cb(err)
   }
 }
 
-const InternalValidateMessage = function (data, type) {
-  Winston.log('debug', 'validating message')
+const InternalValidateJsonResponse = function (data, type) {
+  Winston.log('debug', '[Validator] validating response')
   Expect(data).to.exist
   Expect(typeof data).to.equal('object')
   Expect(Validator.isUUID(data.requesterId, 4)).to.be.true
@@ -65,8 +65,8 @@ const InternalValidateMessage = function (data, type) {
   }
   Expect(data.body).to.exist
   Expect(data).to.contain.all.keys(['requesterId', 'messageId', 'responderId', 'requestedAt', 'respondedAt', 'responseType', 'body'])
-  Winston.log('debug', 'message valid')
+  Winston.log('debug', '[Validator] message valid')
 }
 
-module.exports.validateRequest = ValidateRequest
-module.exports.validateMessage = ValidateMessage
+module.exports.validateJsonClusterResponse = ValidateJsonClusterResponse
+module.exports.validateJsonResponse = ValidateJsonResponse

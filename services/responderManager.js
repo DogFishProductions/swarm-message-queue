@@ -9,7 +9,7 @@
 // my modules
 // configuration file
 const Config = require('../services/lib/configurationManager.js')().config
-const MqManager = require('./mqManager.js')
+const MqManager = require('./lib/mqManager.js')
 const Services = {}
 const MqName = 'responder'
 

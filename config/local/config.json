@@ -11,7 +11,7 @@
       "requester": "/services/requesterService.js"
     },
     "services": {
-      "requester": "/services/lib/requester.js",
+      "requester": "/services/lib/requester-cluster.js",
       "responder": "/services/lib/responder.js",
       "socket": "/services/lib/socket.js"
     }
@@ -29,11 +29,24 @@
       "listenPort": 5678
     },
     "responder": {
+      "processes": 3,
       "connection": {
         "protocol": "tcp",
         "domain": "*",
-        "port": 5432,
-        "stable": true
+        "port": 5432
+      },
+      "router": {
+        "connection": {
+          "protocol": "tcp",
+          "domain": "*",
+          "port": 5433
+        }
+      },
+      "dealer": {
+        "connection": {
+          "protocol": "ipc",
+          "domain": "filer-dealer.ipc"
+        }
       }
     },
     "socket": {
