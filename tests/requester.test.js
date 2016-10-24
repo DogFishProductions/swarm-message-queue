@@ -9,28 +9,23 @@
 
 // third-party modules
 const Winston = require('winston')
-const Rewire = require('rewire')
 const Util = require('util')
 
 // my modules
-const Validator = require('./lib/requestValidator.js')
-const Common = require('./lib/utilities.js')
-const MockZmqRequester = require('./lib/mockZmqRequester.js')
-// configuration file
-const Config = require('../services/lib/configurationManager.js')().config
-// 'rewire', not 'require', the requester so we can set our mock during testing
-const RequesterModule = Rewire('../services/lib/requester.js')
+const Validator = require('requestValidator.js')
+const Common = require('utilities.js')
+const MockZmqRequester = require('mockZmqRequester.js')
+const Config = require('configurationManager.js').config
+const RequesterModule = require('requester.js')
 
-const MZmqRequester = MockZmqRequester({ logLevel: Winston.level })
-// replace the zmq module with our mock
-RequesterModule.__set__('Requester', MZmqRequester)
+const MZmqRequester = MockZmqRequester(Config)
 
 Winston.level = Config.logLevel || 'info'
-const RequesterConf = Config.services.requester
-RequesterConf.logLevel = Winston.level
 
+// inject the mock object
+Config.concreteRequester = MZmqRequester
 // now instantiate the module to be tested
-const Requester = RequesterModule(RequesterConf)
+const Requester = RequesterModule(Config)
 
 let type, pendingDone
 

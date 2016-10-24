@@ -3,17 +3,19 @@
 'use strict'
 
 // third-party modules
-let Net = require('net')
+//let Net = require('net')
 const Q = require('q')
 const Uuid = require('node-Uuid')
 const _ = require('lodash')
 const Winston = require('winston')
+const Path = require('path')
 
 module.exports = (spec) => {
+  const SocketSpec = spec.services[Path.parse(module.filename).name]
   const Deferreds = {}
-  const Host = spec.host
-  const Port = spec.port
-  const Client = new Net.Socket()
+  const Host = SocketSpec.connection.host
+  const Port = SocketSpec.connection.port
+  const Client = spec.concreteSocketClient
 
   let that = {}
   let connected = false

@@ -7,13 +7,13 @@ source ~/.profile
 npm install
 if [ $1 = "production" ]; then
   echo "we're in production"
-  NODE_ENV=$1 node --harmony $2 $3
+  NODE_ENV=$1 NODE_PATH=$2 node --harmony $3 $4
 else 
   if [ $1 = "test" ]; then
     echo "running tests"
-    NODE_ENV=$1 npm run gulp -- test
+    NODE_ENV=$1 NODE_PATH=$2 npm run gulp -- test
   else
     echo "we're in $1"
-    NODE_ENV=$1 nodemon --ignore '*.test.js' --harmony $2 $3
+    NODE_ENV=$1 NODE_PATH=$2 nodemon --ignore '*.test.js' --harmony $3 $4
   fi
 fi

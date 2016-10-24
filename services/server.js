@@ -12,29 +12,30 @@ const Morgan = require('morgan')
 const App = Express()
 const _ = require('lodash')
 const Winston = require('winston')
+// this could be moved to the config file...
+const SocketClient = require('Net')
 
 // my modules
 // configuration file
-const Config = require('../services/lib/configurationManager.js')().config
-// enable dynamic loading of modules
-const ModuleLoader = require('./lib/moduleLoader.js')
+const Config = require('configurationManager.js').config
+const ModuleLoader = require('moduleLoader.js')
 
 Winston.level = Config.logLevel || 'info'
+Config.concreteSocketClient = SocketClient
 
-ModuleLoader.loadModules({ modules: Config.modules.apiEndpoints, parentKey: 'apiEndpoints', logLevel: Winston.level })
+const ApiEndpointModules = {}
+_.forOwn(Config.apiEndpoints, (value, key) => {
+  ApiEndpointModules[key] = value.module
+})
+
+ModuleLoader.loadModules({ modules: ApiEndpointModules, parentKey: 'apiEndpoints', logLevel: Winston.level })
 .done(
   (modules) => {
-    const Spec = { app: App }
     const Host = Config.host
     _.forOwn(modules.apiEndpoints, (value, key) => {
       if (key) {
-        Spec.config = Config.apiEndpoints[key]
-        Spec.config.host = Config.host
-        Spec.config.modules = Config.modules
-        Spec.config.name = key
-        Spec.config.services = Config.services
-        Spec.logLevel = Config.logLevel
-        value(Spec)
+        Config.app = App
+        value(Config)
       }
     })
     App.use(Morgan(Config.NodeEnv))

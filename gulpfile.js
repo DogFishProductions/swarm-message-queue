@@ -22,7 +22,10 @@ Gulp.task('nodemon', function (done) {
       '*.test.js'
     ],
     ext: 'js html',
-    env: { 'NODE_ENV': GetOption('node_env') }
+    env: {
+      'NODE_ENV': GetOption('node_env'),
+      'NODE_PATH': GetOption('node_path')
+    }
   })
   .on('start', function () {
     if (!called) {

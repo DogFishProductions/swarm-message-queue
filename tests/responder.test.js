@@ -7,19 +7,15 @@
  */
 
 // third-party modules
-const Rewire = require('rewire')
-//const EventEmitter = require('events').EventEmitter
 const Winston = require('winston')
 const Uuid = require('node-Uuid')
 
 // my modules
-const Validator = require('./lib/requestValidator.js')
-const MockZmqResponder = require('./lib/mockZmqResponder.js')
-const Common = require('./lib/utilities.js')
-// configuration file
-const Config = require('../services/lib/configurationManager.js')().config
-// 'rewire', not 'require', the responder so we can set our mock during testing
-const ResponderModule = Rewire('../services/lib/responder.js')
+const Validator = require('requestValidator.js')
+const MockZmqResponder = require('mockZmqResponder.js')
+const Common = require('utilities.js')
+const Config = require('configurationManager.js').config
+const ResponderModule = require('responder.js')
 
 Winston.level = Config.logLevel || 'info'
 const TestResponse = function (data) {
@@ -28,19 +24,13 @@ const TestResponse = function (data) {
   Validator.validateJsonResponse(jsonData, pendingDone, type)
 }
 
-//const MZmqResponder = new MockZmqResponder()
-const MZmqResponder = MockZmqResponder({
-  logLevel: Winston.level,
-  testHandler: TestResponse
-})
-// replace the zmq module with our mock
-ResponderModule.__set__('Responder', MZmqResponder)
+Config.testHandler = TestResponse
+const MZmqResponder = MockZmqResponder(Config)
 
-const ResponderConf = Config.services.responder
-ResponderConf.logLevel = Winston.level
-
+// inject the mock object
+Config.concreteResponder = MZmqResponder
 // now instantiate the module to be tested
-ResponderModule(ResponderConf)
+ResponderModule(Config)
 
 let type, pendingDone
 

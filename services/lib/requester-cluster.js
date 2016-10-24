@@ -12,20 +12,14 @@ const Uuid = require('node-Uuid')
 const Q = require('q')
 const _ = require('lodash')
 const Winston = require('winston')
-const Util = require('util')
-
-// we define this here so that it can be rewired during test
-// rewire doesn't allow us to override const values, so this has to be a let (even though the value will not change)
-// Note that this variable will only be set by a unit test.
-let Requester
-let Net = require('net')
+const Path = require('path')
 
 // my modules
-// enable dynamic loading of modules
-const ModuleLoader = require('./moduleLoader.js')
+const ModuleLoader = require('moduleLoader.js')
 
 module.exports = (spec) => {
-  const RequesterClusterSpec = spec.services['requester-cluster']
+  const SocketServer = spec.concreteSocketServer
+  const RequesterClusterSpec = spec.services[Path.parse(module.filename).name]
   const NoProc = RequesterClusterSpec.processes
   const Timeout = RequesterClusterSpec.timeout
   const Deferreds = {}
@@ -64,7 +58,7 @@ module.exports = (spec) => {
     }
 
     // listen on a socket
-    Net.createServer((connection) => {
+    SocketServer.createServer((connection) => {
       Winston.log('info', '[Requester:Master] socket subscriber listening:', { port: port })
       connection.uuid = Uuid.v4()
       Connections[connection.uuid] = connection
@@ -149,24 +143,19 @@ module.exports = (spec) => {
         } else if (msg.response === 'ready') {
           // for testing purposes only
           count += 1
-          if (count === NoProc) {
+          if ((count === NoProc) && process.send) {
             process.send({ response: 'workers ready' })
           }
         }
       })
     }
-  } else {   
-    const RequesterSpec = spec.services.requester
-    ModuleLoader.loadModules({ modules: { requester: spec.modules.services.requester } })
+  } else { 
+    const HandlerKey = RequesterClusterSpec.handler
+    let Requester
+    ModuleLoader.loadModules({ modules: { requester: spec.services[HandlerKey].module } })
     .done(
       (modules) => {
-        RequesterSpec.logLevel = spec.logLevel
-        // An alternative concrete implementation of Requester may be passed in by the
-        // code requiring this module. If so, use that implementation instead
-        // of the default in this service. Note that the alternative must implement the
-        // ZMQ Requester interface.
-        RequesterSpec.requester = Requester
-        Requester = modules.requester(RequesterSpec)
+        Requester = modules.requester(spec)
         // let the master know we're ready for action
         process.send({ response: 'ready' })
       },

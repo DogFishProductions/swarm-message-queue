@@ -8,26 +8,21 @@
 
 // third-party modules
 const Fs = require('fs')
-const Zmq = require('Zmq')
+const Path = require('path')
 const Winston = require('winston')
 
 // we define this here so that it can be rewired during test
 // rewire doesn't allow us to override const values, so this has to be a let (even though the value will not change)
-let Responder = Zmq.socket('rep')
+//let Responder = Zmq.socket('rep')
 
 // my modules
-const Common = require('./common.js')
+const Common = require('common.js')
 
 module.exports = (spec) => {
+  const ResponderSpec = spec.services[Path.parse(module.filename).name]
+  const Responder = spec.concreteResponder
   let delay
   Winston.level = spec.logLevel || 'info'
-
-  // A mock implementation of Responder may be passed in by the
-  // code requiring this module. If so, use that implementation instead
-  // of ZMQ
-  if (spec.responder) {
-    Responder = spec.responder
-  }
 
   // handle incoming requests and applies a random delay to the response to simulate
   // work being done synchronously by a remote task
@@ -86,14 +81,14 @@ module.exports = (spec) => {
     clearTimeout(delay)
   }
 
-  if (spec.processes > 1) {
+  if (ResponderSpec.processes > 1) {
     // responder is not the most stable part of the connection and should connect
-    Responder.connect(Common.createUrl(spec.dealer.connection))
+    Responder.connect(Common.createUrl(ResponderSpec.dealer.connection))
   } else {
     // responder is the most stable part of the connection and should bind
-    Responder.bind(Common.createUrl(spec.connection), () => {
+    Responder.bind(Common.createUrl(ResponderSpec.connection), () => {
       // should handle errors here...
-      Winston.log('info', '[Responder] listening for Zmq requesters:', { protocol: connection.protocol, domain: connection.domain, port: connection.port })
+      Winston.log('info', '[Responder] listening for Zmq requesters:', ResponderSpec.connection)
     })
   }
 

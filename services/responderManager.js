@@ -6,13 +6,19 @@
  * DESCRIPTION
  */
 
+// third-party modules
+// this could be moved to the config file...
+const Responder = require('Zmq').socket('rep')
+
 // my modules
 // configuration file
-const Config = require('../services/lib/configurationManager.js')().config
-const MqManager = require('./lib/mqManager.js')
+const Config = require('configurationManager.js').config
+const MqManager = require('mqManager.js')
 const Services = {}
-const MqName = 'responder'
 
-Config.mqName = MqName
+const MqName = Config.services['responder-manager'].handler
 
-Services[MqName] = MqManager(Config).getMq(MqName)
+// Inversion of Control for responder...
+Config.concreteResponder = Responder
+
+Services[MqName] = MqManager.getMq(MqName, Config)

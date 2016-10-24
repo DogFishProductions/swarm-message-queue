@@ -8,7 +8,7 @@
   },
   "modules": {
     "apiEndpoints": {
-      "requester": "/services/requesterService.js"
+      "dispatcher": "/services/dispatcherEndpoint.js"
     },
     "services": {
       "requester": "/services/lib/requester-cluster.js",
@@ -57,17 +57,17 @@
     }
   },
   "apiEndpoints": {
-    "requester": {
+    "dispatcher": {
       "handlers": [{
         "service": "socket",
         "method": "makeRequest",
-        "path": "/requester/request",
+        "path": "/dispatcher/request",
         "method": "get",
       },
       {
         "service": "socket",
         "method": "connect",
-        "path": "/requester/connect",
+        "path": "/dispatcher/connect",
         "method": "get",
       }]
     }

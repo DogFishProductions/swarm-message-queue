@@ -9,40 +9,29 @@
 
 // third-party modules
 const Winston = require('winston')
-const Rewire = require('rewire')
-const EventEmitter = require('events').EventEmitter
 
 // my modules
-const MockZmqRequester = require('./mockZmqRequester.js')
-const MockNetSocketServer = require('./mockNetSocketServer.js')
-const MockNetSocketConnection = require('./mockNetSocketConnection.js')
+const MockZmqRequester = require('mockZmqRequester.js')
+const MockNetSocketServer = require('mockNetSocketServer.js')
+const MockNetSocketConnection = require('mockNetSocketConnection.js')
 // configuration file
-const Config = require('../../services/lib/configurationManager.js')().config
-// 'rewire', not 'require', the requester so we can set our mock during testing
-const RequesterModule = Rewire('../../services/lib/requester-cluster.js')
-
-const Spec = { logLevel: Winston.level }
-const MZmqRequester = MockZmqRequester(Spec)
-// replace the zmq module with our mock requester
-RequesterModule.__set__('Requester', MZmqRequester)
-
-// replace the net module with our mock server and connection
-const MNetConnection = MockNetSocketConnection(Spec)
-Spec.connection = MNetConnection
-const MNetSocketServer = MockNetSocketServer(Spec)
-RequesterModule.__set__('Net', MNetSocketServer)
+const Config = require('configurationManager.js').config
+const RequesterModule = require('requester-cluster.js')
 
 Winston.level = Config.logLevel || 'info'
 
+const MZmqRequester = MockZmqRequester(Config)
+// inject the mock object
+Config.concreteRequester = MZmqRequester
+
+// replace the net module with our mock server and connection
+const MNetConnection = MockNetSocketConnection(Config)
+Config.connection = MNetConnection
+const MNetSocketServer = MockNetSocketServer(Config)
+Config.concreteSocketServer = MNetSocketServer
+
 // now instantiate the module to be tested
 RequesterModule(Config)
-
-// This will send a message once for the cluster master and once for each worker.
-// The cluster master regards it's containing process to be the test which forked this script, so the
-// unit test will receive this message from the cluster master.
-// The workers regard their containing process to be the cluster master, so the cluster master will receive
-// this message from the workers.
-//process.send({ response: 'ready' })
 
 // pass on our message to the correct process
 process.on('message', (m) => {

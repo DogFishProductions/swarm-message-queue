@@ -20,9 +20,9 @@ const Path = require('path')
 const Uuid = require('node-Uuid')
 
 // my modules
-const Validator = require('./lib/requestValidator.js')
+const Validator = require('requestValidator.js')
 // configuration file
-const Config = require('../services/lib/configurationManager.js')().config
+const Config = require('configurationManager.js').config
 Winston.level = Config.logLevel || 'info'
 
 let child

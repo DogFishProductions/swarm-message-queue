@@ -12,7 +12,7 @@ const EventEmitter = require('events').EventEmitter
 const Winston = require('winston')
 
 // my modules
-const Common = require('./utilities.js')
+const Common = require('utilities.js')
 
 module.exports = (spec) => {
   let that = new EventEmitter()

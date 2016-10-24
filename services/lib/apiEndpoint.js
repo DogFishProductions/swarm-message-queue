@@ -30,9 +30,10 @@ module.exports = (spec) => {
   // shouldn't be. Add methods to this array as appropriate
   // (e.g. 'post', 'put', 'del' etc.)
   const ValidMethods = ['get']
-  // make the object durable by setting a private state
-  const Config = spec.config
+
+  // Inversion of Control
   const App = spec.app
+
   Winston.level = spec.logLevel || 'info'
 
   let that = {}
@@ -44,7 +45,7 @@ module.exports = (spec) => {
    *
    *  @since 1.0.0
    *
-   *  @param  {Function}  handler - The name of the connector to use (must match a key in the config).
+   *  @param  {Function}  handler - The name of the function to invoke.
    *  @param  {Function}  method - The HTTP method used to connect (e.g. 'get', 'post', 'put', 'del').
    *  @param  {Function}  path - The relative URL of the endpoint.
    *
@@ -53,7 +54,7 @@ module.exports = (spec) => {
   that.addHandler = function (handler, method, path) {
     // make sure the method is valid
     if (ValidMethods.indexOf(method) >= 0) {
-      App[method](Config.host.apiPathPrefix + path, (req, res) => {
+      App[method](spec.host.apiPathPrefix + path, (req, res) => {
         // pass the parameters to the subclass so that they have access to the
         // request and response
         let params = that.getParams(req, res)

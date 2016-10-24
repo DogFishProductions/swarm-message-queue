@@ -14,7 +14,7 @@ const Winston = require('winston')
 
 // my modules
 // configuration file
-const Config = require('../../services/lib/configurationManager.js')().config
+const Config = require('configurationManager.js').config
 Winston.level = Config.logLevel || 'info'
 
 // don't use arrow functions here as this will be passed to mocha which doesn't like them

@@ -7,33 +7,25 @@
  */
 
 // third-party modules
-const Zmq = require('Zmq')
 const Uuid = require('node-Uuid')
+const Path = require('path')
 const Q = require('q')
 const Winston = require('winston')
 
-// we define this here so that it can be rewired during test
-// rewire doesn't allow us to override const values, so this has to be a let (even though the value will not change)
-let Requester = Zmq.socket('req')
-
 // my modules
-const Common = require('./common.js')
+const Common = require('common.js')
 
 module.exports = (spec) => {
+  const RequesterSpec = spec.services[Path.parse(module.filename).name]
+
   let that = {}
 
   Winston.level = spec.logLevel || 'info'
-  const Timeout = spec.timeout
+  const Timeout = RequesterSpec.timeout
   const Deferreds = {}
   const RequesterId = Uuid.v4()
   const Timeouts = {}
-
-  // A mock implementation of Requester may be passed in by the
-  // code requiring this module. If so, use that implementation instead
-  // of ZMQ
-  if (spec.requester) {
-    Requester = spec.requester
-  }
+  const Requester = spec.concreteRequester
 
   // handle replies from responder
   Requester.on('message', (data) => {
@@ -48,7 +40,7 @@ module.exports = (spec) => {
   })
 
   // connect to the requester(s)
-  let connection = spec.connection
+  let connection = RequesterSpec.connection
   Winston.log('debug', '[Requester:Worker] connecting:', {
     requesterId: RequesterId,
     protocol: connection.protocol,

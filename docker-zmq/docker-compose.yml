@@ -7,12 +7,12 @@ services:
    - $PWD/..:/home/dogfish/app
   networks:
    - zerobridge
-  command: sh ./shell/scripts/startup.sh ${NODE_ENV} ./services/requesterManager.js target.txt
+  command: sh ./shell/scripts/startup.sh ${NODE_ENV} ${NODE_PATH} ./services/requesterManager.js target.txt
 
  responder:
   extends:
    service: requester
-  command: sh ./shell/scripts/startup.sh ${NODE_ENV} ./services/responderManager.js
+  command: sh ./shell/scripts/startup.sh ${NODE_ENV} ${NODE_PATH} ./services/responderManager.js
 
  responder-cluster:
   extends:
@@ -31,7 +31,7 @@ services:
   depends_on:
    - responder
    - requester
-  command: sh ./shell/scripts/startup.sh ${NODE_ENV} ./services/server.js
+  command: sh ./shell/scripts/startup.sh ${NODE_ENV} ${NODE_PATH} ./services/server.js
 
  debug:
   extends:
@@ -42,7 +42,7 @@ services:
   depends_on:
    - responder
    - requester
-  command: sh ./shell/scripts/startup-debug.sh ${NODE_ENV} ./services/server.js
+  command: sh ./shell/scripts/startup-debug.sh ${NODE_ENV} ${NODE_PATH} ./services/server.js
 
  test:
   extends:
@@ -50,7 +50,7 @@ services:
   ports:
    - "3000:3000"
    - "9229:9229"
-  command: sh ./shell/scripts/startup.sh ${NODE_ENV}
+  command: sh ./shell/scripts/startup.sh ${NODE_ENV} ${NODE_PATH}
 
 networks:
  zerobridge:

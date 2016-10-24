@@ -8,7 +8,6 @@
  * To be run once in server.js on startup.
  */
 
-const Fs = require('fs')
 const Q = require('q')
 const Modules = {}
 const _ = require('lodash')
@@ -37,34 +36,23 @@ module.exports.loadModules = (spec) => {
       (kvp) => {
         const Deferred = Q.defer()
         // assume only ever one key-value pair in each element of the argument array (error capture here)
-        let name = kvp[0]
-        let path = process.cwd() + kvp[1]
-        if (path) {
-          // make sure path is a reference to a file
-          Q.nfcall(Fs.lstat, path)
-          .done(
-            (stat) => {
-              if (stat.isFile()) {
-                Winston.log('silly', 'Loading module', { path: path })
-                if (ParentKey) {
-                  Modules[ParentKey] = Modules[ParentKey] || {}
-                  if (!Modules[ParentKey][name]) {
-                    Modules[ParentKey][name] = require(path)
-                  }
-                } else if (!Modules[name]) {
-                  Modules[name] = require(path)
-                }
-                Deferred.resolve(path)
-              } else {
-                throw new Error('Required path is not a file: ' + path)
-              }
-            },
-            (err) => {
-              Deferred.reject(err)
+        const name = kvp[0]
+        const path = kvp[1]
+        Winston.log('silly', 'Loading module', { path: path })
+        try {
+          const mod = require(path)
+
+          if (ParentKey) {
+            Modules[ParentKey] = Modules[ParentKey] || {}
+            if (!Modules[ParentKey][name]) {
+              Modules[ParentKey][name] = mod
             }
-          )
-        } else {
+          } else if (!Modules[name]) {
+            Modules[name] = mod
+          }
           Deferred.resolve()
+        } catch(err) {
+          Deferred.reject(err)
         }
         return Deferred.promise
       }
