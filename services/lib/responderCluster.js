@@ -55,10 +55,7 @@ module.exports = (spec) => {
         ResponderSpec.logLevel = spec.logLevel
         // override the connection to suit the cluster dealer
         ResponderSpec.connection = ResponderClusterSpec.dealer.connection
-        // An alternative concrete implementation of Requester may be passed in by the
-        // code requiring this module. If so, use that implementation instead
-        // of the default in this service. Note that the alternative must implement the
-        // ZMQ Requester interface.
+        // Inversion of Control
         ResponderSpec.responder = Responder
         Responder = modules.requester(ResponderSpec)
         // let the master know we're ready for action

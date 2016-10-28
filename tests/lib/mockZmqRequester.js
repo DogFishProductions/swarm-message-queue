@@ -11,7 +11,8 @@ const EventEmitter = require('events').EventEmitter
 const Winston = require('winston')
 
 // my modules
-const Common = require('utilities.js')
+const Utilities = require('utilities.js')
+const Common = require('common.js')
 
 module.exports = (spec) => {
   let that = new EventEmitter()
@@ -53,10 +54,17 @@ module.exports = (spec) => {
    *
    */
   that.send = (data) => {
-    Winston.log('info', '[MockZmqRequester] Simulating sending:', data)
-    const jsonData = JSON.parse(data)
-    const responseData = JSON.stringify(Common.createJsonResponse(jsonData, type))
-    that.emit('message', responseData)
+    let timeout
+    const Delay = () => {
+      Winston.log('info', '[MockZmqRequester] Simulating sending:', data)
+      const jsonData = JSON.parse(data)
+      const responseData = JSON.stringify(Utilities.createJsonResponse(jsonData, type))
+      that.emit('message', responseData)
+      clearTimeout(timeout)
+    }
+    // don't forget to bind 'next' to the generator function
+    // (since it uses 'call' it will be bound to the timeout otherwise)
+    timeout = setTimeout(Delay, Common.randomInt(1000, 2000))
   }
 
   return that

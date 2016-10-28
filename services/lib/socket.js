@@ -3,7 +3,6 @@
 'use strict'
 
 // third-party modules
-//let Net = require('net')
 const Q = require('q')
 const Uuid = require('node-Uuid')
 const _ = require('lodash')
@@ -15,6 +14,7 @@ module.exports = (spec) => {
   const Deferreds = {}
   const Host = SocketSpec.connection.host
   const Port = SocketSpec.connection.port
+  // Inversion of Control
   const Client = spec.concreteSocketClient
 
   let that = {}
@@ -40,15 +40,10 @@ module.exports = (spec) => {
   Client.on('data', (data) => {
     Winston.log('debug', '[Socket] Client received:', { data: data })
     const response = JSON.parse(data)
-
-    let currentRequest
-    for (let i = 0; i < response.length; i++) {
-      currentRequest = response[i]
-      _.forOwn(currentRequest, (value, key) => {
-        Deferreds[key].resolve([currentRequest])
-        delete Deferreds[key]
-      })
-    }
+    _.forOwn(response, (value, key) => {
+      Deferreds[key].resolve(response)
+      delete Deferreds[key]
+    })
   })
 
   Client.on('close', () => {
@@ -73,12 +68,12 @@ module.exports = (spec) => {
     }
   })
 
-  that.makeRequest = () => {
+  that.makeRequest = (data) => {
     const Deferred = Q.defer()
     if (Client._handle && Client.writable) {
       const RequestId = Uuid.v4()
       Deferreds[RequestId] = Deferred
-      Client.write(RequestId)
+      Client.write({ requestId: RequestId })
     } else {
       let err = '[Socket] There\'s a problem with the Client socket: '
       if (!Client._handler) {

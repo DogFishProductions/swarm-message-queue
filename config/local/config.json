@@ -1,9 +1,0 @@
-{
-  "services": {
-    "requester": {
-      "connection": {
-        "domain": "localhost"
-      }
-    }
-  }
-}

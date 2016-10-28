@@ -14,21 +14,13 @@ const Path = require('path')
 const APIEndpoint = require('apiEndpoint.js')
 const ModuleLoader = require('moduleLoader.js')
 
-// make sure we get singleton handler instances
-const HandlerInstances = {}
-
 /** @function
  *
  *  @summary APIEndpoint constructor.
  *
  *  @since 1.0.0
  *
- *  @param  {Object}  spec - A specification object.
- *  @param  {Object}  spec.config - An endpoint configuration object.
- *  @param  {Object}  spec.config.connector - A connector to an external endpoint.
- *  @param  {Object}  spec.config.analyser - A sentiment analyser.
- *  @param  {Object}  spec.config.app - The application object.
- *  @param  {String}  spec.config.pathPrefix - The URL prefix for endpoints.
+ *  @param  {Object}  spec - A configuration specification object.
  *
  *  @returns  {Object} The APIEndpoint.
  */
@@ -36,38 +28,22 @@ module.exports = (spec) => {
   Winston.level = spec.logLevel || 'info'
 
   const DispatcherSpec = spec.apiEndpoints[Path.parse(module.filename).name]
-  const EndpointHandlers = DispatcherSpec.handlers
-  const HandlerServices = {}
+  const EndpointHandlerSettings = DispatcherSpec.handlers
+  const HandlerModules = {}
 
-  let currentServiceKey
+  let handlerSettings, serviceKey, handlerFunction
   
-  for (let i = 0; i < EndpointHandlers.length; i++) {
-    currentServiceKey = EndpointHandlers[i].service
-    //  make sure we instanciate each service only once
-    if (!HandlerInstances[currentServiceKey] && !HandlerServices[currentServiceKey]) {
-      HandlerServices[currentServiceKey] = spec.services[currentServiceKey].module
+  for (handlerSettings of EndpointHandlerSettings) {
+    serviceKey = handlerSettings.service
+    handlerFunction = handlerSettings.function
+    //  make sure we instantiate each service only once
+    if (!HandlerInstances[serviceKey] && !HandlerModules[serviceKey])) {
+      HandlerModules[serviceKey] = spec.services[serviceKey].module
     }
   }
 
   let that = APIEndpoint(spec)
-
-  ModuleLoader.loadModules({ modules: HandlerServices, parentKey: 'services' })
-  .done(
-    (modules) => {
-      let currentSettings, currentModule, currentServiceKey, currentInstance
-      for (let i = 0; i < EndpointHandlers.length; i++) {
-        currentSettings = EndpointHandlers[i]
-        currentServiceKey = currentSettings.service
-        currentModule = modules.services[currentServiceKey]
-        currentInstance = currentModule(spec)
-        HandlerInstances[currentServiceKey] = currentInstance
-        that.addHandler(currentInstance[currentSettings.function], currentSettings.method, currentSettings.path)
-      }
-    },
-    (err) => {
-      throw err
-    }
-  )
+  that.addHandlers({ modules: HandlerModules, spec: spec, handlerSettingsArray: EndpointHandlerSettings })
 
   return that
 }

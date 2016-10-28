@@ -20,14 +20,13 @@ const Path = require('path')
 const Uuid = require('node-Uuid')
 
 // my modules
-const Validator = require('requestValidator.js')
-// configuration file
-const Config = require('configurationManager.js').config
+const Validator = require('testValidator.js')
+const Config = require('config.js')
 Winston.level = Config.logLevel || 'info'
 
 let child
 
-describe('Requester-Cluster', function () {
+describe('RequesterCluster', function () {
   let ready = false
 
   before(function (done) {

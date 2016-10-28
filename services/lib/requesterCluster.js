@@ -18,6 +18,7 @@ const Path = require('path')
 const ModuleLoader = require('moduleLoader.js')
 
 module.exports = (spec) => {
+  // Inversion of Control
   const SocketServer = spec.concreteSocketServer
   const RequesterClusterSpec = spec.services[Path.parse(module.filename).name]
   const NoProc = RequesterClusterSpec.processes
@@ -33,31 +34,20 @@ module.exports = (spec) => {
     const port = RequesterClusterSpec.listenPort
 
     const FormatResponse = (response) => {
-      const Results = []
       const FormattedResponseEnvelope = {}
-      for (let i = 0; i < response.length; i++) {
-        const CurrentResponse = response[i]
-        const FormattedResponse = {}
+      for (let CurrentResponse of response) {
+        const requestId = CurrentResponse.requestId
 
-        if (!FormattedResponseEnvelope[CurrentResponse.requestId]) {
-          FormattedResponseEnvelope[CurrentResponse.requestId] = []
+        if (!FormattedResponseEnvelope[requestId]) {
+          FormattedResponseEnvelope[requestId] = []
         }
-        _.forOwn(CurrentResponse, (value, key) => {
-          if (key !== 'requestId') {
-            FormattedResponse[key] = value
-          }
-        })
-        FormattedResponseEnvelope[CurrentResponse.requestId].push(FormattedResponse)
+        delete CurrentResponse.requestId
+        FormattedResponseEnvelope[requestId].push(CurrentResponse)
       }
-      _.forOwn(FormattedResponseEnvelope, (value, key) => {
-        let newResult = {}
-        newResult[key] = value
-        Results.push(newResult)
-      })
-      return Results
+      return FormattedResponseEnvelope
     }
 
-    // listen on a socket
+    // listen on a socket for incoming requests
     SocketServer.createServer((connection) => {
       Winston.log('info', '[Requester:Master] socket subscriber listening:', { port: port })
       connection.uuid = Uuid.v4()

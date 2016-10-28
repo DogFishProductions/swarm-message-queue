@@ -15,8 +15,8 @@ const MockZmqRequester = require('mockZmqRequester.js')
 const MockNetSocketServer = require('mockNetSocketServer.js')
 const MockNetSocketConnection = require('mockNetSocketConnection.js')
 // configuration file
-const Config = require('configurationManager.js').config
-const RequesterModule = require('requester-cluster.js')
+const Config = require('config.js')
+const RequesterModule = require('requesterCluster.js')
 
 Winston.level = Config.logLevel || 'info'
 

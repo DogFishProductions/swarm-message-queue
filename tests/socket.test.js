@@ -11,10 +11,10 @@ const Winston = require('winston')
 const Uuid = require('node-Uuid')
 
 // my modules
-const Validator = require('requestValidator.js')
+const Validator = require('testValidator.js')
 const Common = require('utilities.js')
 // configuration file
-const Config = require('configurationManager.js').config
+const Config = require('config.js')
 const SocketModule = require('socket.js')
 const MockNetSocket = require('mockNetSocketClient.js')
 

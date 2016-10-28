@@ -13,15 +13,14 @@ const App = Express()
 const _ = require('lodash')
 const Winston = require('winston')
 // this could be moved to the config file...
-const SocketClient = require('Net')
+const Net = require('net')
 
 // my modules
-// configuration file
-const Config = require('configurationManager.js').config
+const Config = require('config.js')
 const ModuleLoader = require('moduleLoader.js')
 
 Winston.level = Config.logLevel || 'info'
-Config.concreteSocketClient = SocketClient
+Config.concreteSocketClient = new Net.Socket()
 
 const ApiEndpointModules = {}
 _.forOwn(Config.apiEndpoints, (value, key) => {
@@ -31,7 +30,7 @@ _.forOwn(Config.apiEndpoints, (value, key) => {
 ModuleLoader.loadModules({ modules: ApiEndpointModules, parentKey: 'apiEndpoints', logLevel: Winston.level })
 .done(
   (modules) => {
-    const Host = Config.host
+    const Host = Config.webHost
     _.forOwn(modules.apiEndpoints, (value, key) => {
       if (key) {
         Config.app = App

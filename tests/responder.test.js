@@ -9,31 +9,23 @@
 // third-party modules
 const Winston = require('winston')
 const Uuid = require('node-Uuid')
+const Q = require('q')
 
 // my modules
-const Validator = require('requestValidator.js')
+const Validator = require('testValidator.js')
 const MockZmqResponder = require('mockZmqResponder.js')
 const Common = require('utilities.js')
-const Config = require('configurationManager.js').config
+const Config = require('config.js')
 const ResponderModule = require('responder.js')
+const ServiceManager = require('serviceManager.js')
 
 Winston.level = Config.logLevel || 'info'
-const TestResponse = function (data) {
+
+Config.testHandler = function (data) {
   let jsonData = JSON.parse(data)
   Winston.log('info', '[ResponderTest] JSON response data:', jsonData)
-  Validator.validateJsonResponse(jsonData, pendingDone, type)
+  Validator.validateJsonResponse(jsonData, type, pendingDone)
 }
-
-Config.testHandler = TestResponse
-const MZmqResponder = MockZmqResponder(Config)
-
-// inject the mock object
-Config.concreteResponder = MZmqResponder
-// now instantiate the module to be tested
-ResponderModule(Config)
-
-let type, pendingDone
-
 const CreateMessage = function (filename) {
   return {
     requestId: Uuid.v4(),
@@ -43,12 +35,33 @@ const CreateMessage = function (filename) {
     requestedAt: Date.now()
   }
 }
+const MZmqResponder = MockZmqResponder(Config)
+// inject the mock object
+Config.concreteResponder = MZmqResponder
+
+let type, pendingDone
 
 describe('Responder', function () {
+  before(function(done) {
+    ServiceManager.getService('fileReader', Config)
+    .done(
+      handler => {
+        Config.responderHandler = handler
+        // now instantiate the module to be tested
+        ResponderModule(Config)
+        done()        
+      },
+      err => {
+        Winston.log('error', '[ResponderTest] we had an error loading the handler', err)
+        done(err)
+      }
+    )
+  })
+
   describe('Correct Filename', function () {
     it('On receiving request should return response', function (done) {
       pendingDone = done
-      const NewRequest = Common.createJsonRequest('target.txt')
+      const NewRequest = Common.createJsonRequest({ filename: 'target.txt' })
       type = 'Response'
       MZmqResponder.makeRequest(JSON.stringify(NewRequest))
     })
@@ -57,10 +70,9 @@ describe('Responder', function () {
   describe('Incorrect Filename', function () {
     it('On receiving request should return error', function (done) {
       pendingDone = done
-      const NewRequest = Common.createJsonRequest('incorrect filename')
+      const NewRequest = Common.createJsonRequest({ filename: 'incorrect filename' })
       type = 'Error'
       MZmqResponder.makeRequest(JSON.stringify(NewRequest))
     })
   })
 })
-

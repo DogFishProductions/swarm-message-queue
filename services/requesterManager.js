@@ -9,16 +9,26 @@
 // third-party modules
 // this could be moved to the config file...
 const Requester = require('Zmq').socket('req')
+const Winston = require('winston')
 
 // my modules
-// configuration file
-const Config = require('configurationManager.js').config
-const MqManager = require('mqManager.js')
-const Services = {}
+const Config = require('config.js')
+const ServiceManager = require('serviceManager.js')
 
-const MqName = Config.services['requester-manager'].handler
+const Services = {}
+const MqName = Config.services.requesterManager.handler
+Winston.level = Config.logLevel || 'info'
 
 // Inversion of Control for requester...
 Config.concreteRequester = Requester
 
-Services[MqName] = MqManager.getMq(MqName, Config)
+ServiceManager.getService(MqName, Config)
+.done(
+  service => {
+    Services[MqName] = service
+  },
+  err => {
+    Winston.log('error', '[RequesterManager] couldn\'t load requester', err)
+    exit(1)
+  }
+)

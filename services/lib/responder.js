@@ -11,32 +11,29 @@ const Fs = require('fs')
 const Path = require('path')
 const Winston = require('winston')
 
-// we define this here so that it can be rewired during test
-// rewire doesn't allow us to override const values, so this has to be a let (even though the value will not change)
-//let Responder = Zmq.socket('rep')
-
 // my modules
 const Common = require('common.js')
+const ResponseMessage = require('responseMessage.js')
 
 module.exports = (spec) => {
+  // get the configuration for this module
   const ResponderSpec = spec.services[Path.parse(module.filename).name]
+  // Inversion of Control
   const Responder = spec.concreteResponder
-  let delay
+  const Handler = spec.responderHandler
+
+  let that = {}
   Winston.level = spec.logLevel || 'info'
 
-  // handle incoming requests and applies a random delay to the response to simulate
-  // work being done synchronously by a remote task
   Responder.on('message', (data) => {
     // parse incoming message
     let request = JSON.parse(data)
-    Winston.log('debug', '[Responder] received request:', {
-      requesterId: request.requesterId,
-      messageId: request.messageId,
-      filename: request.filename
-    })
-    // simulate time taken to do something before Responding
-    delay = setTimeout(Respond, Common.randomInt(1000, 2000), request)
-
+    Winston.log('debug', '[Responder] received request:', request)
+    Handler.doYourStuff(request)
+    .done(
+      response => Respond(response),
+      err => Respond(err)
+    )
   })
 
   /** @function Respond
@@ -54,31 +51,30 @@ module.exports = (spec) => {
    *
    *  @returns  {Object} A Promise.
    */
-  const Respond = (request) => {
-    // read file and reply with content
-    Fs.readFile(request.filename, (err, content) => {
-      let result, type
-      if (err) {
-        result = err
-        type = 'Error'
-      } else {
-        result = content.toString()
-        type = 'Response'
+  const Respond = (data) => {
+    const Message = ResponseMessage()
+    let response
+    try {
+      Message
+      .request(data.request)
+      .responderId(process.pid)
+      if (data.err) {
+        Message
+        .body(data.err.message)
+        .asError()
       }
-      let response = JSON.stringify({
-        requestId: request.requestId,
-        requesterId: request.requesterId,
-        messageId: request.messageId,
-        body: result,
-        requestedAt: request.requestedAt,
-        respondedAt: Date.now(),
-        responderId: process.pid,
-        responseType: type
-      })
-      Winston.log('debug', '[Responder] sending response:', response)
-      Responder.send(response)
-    })
-    clearTimeout(delay)
+      else {
+        Message
+        .body(data.result)
+        .asResponse()
+      }
+      response = JSON.stringify(Message.toJSON())
+    }
+    catch(err) {
+      throw err
+    }
+    Winston.log('debug', '[Responder] sending response:', response)
+    Responder.send(response)
   }
 
   if (ResponderSpec.processes > 1) {
@@ -97,4 +93,6 @@ module.exports = (spec) => {
     Winston.log('info', '[Responder] shutting down...')
     Responder.close()
   })
+
+  return that
 }

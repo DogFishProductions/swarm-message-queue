@@ -9,41 +9,40 @@
 // third-party modules
 const Uuid = require('node-Uuid')
 
-const CreateJsonRequest = (filename) => {
-  return {
-    requestId: Uuid.v4(),
-    requesterId: Uuid.v4(),
-    messageId: Uuid.v4(),
-    filename: filename,
-    requestedAt: Date.now()
+// my modules
+const RequestMessage = require('requestMessage.js')
+const ResponseMessage = require('responseMessage.js')
+
+const CreateJsonRequest = (options) => {
+  try {
+    return RequestMessage(Object.assign({ requestId: Uuid.v4(), requesterId: Uuid.v4() }, options)).toJSON()
+  }
+  catch(err) {
+    throw err
   }
 }
 
 const CreateJsonResponse = (data, type) => {
   type = type || 'Response'
-  return {
-    requestId: data.requestId,
-    requesterId: data.requesterId,
-    messageId: data.messageId,
-    body: 'This is a mock response',
-    requestedAt: data.requestedAt,
-    respondedAt: Date.now(),
-    responderId: 123,
-    responseType: type
+  try {
+    const response = ResponseMessage().request(RequestMessage(data).toJSON()).body('This is a mock response')
+    if (type === 'Error') {
+      response.asError()
+    }
+    else {
+      response.asResponse()
+    }
+    return response.toJSON()
+  }
+  catch(err) {
+    throw err
   }
 }
 
-const CreateJsonResponseMessage = (type) => {
+const CreateJsonResponseMessage = (type, requestId) => {
   type = type || 'Response'
-  return {
-    requesterId: Uuid.v4(),
-    messageId: Uuid.v4(),
-    body: 'This is a test',
-    requestedAt: Date.now(),
-    respondedAt: Date.now(),
-    responderId: 123,
-    responseType: type
-  }
+  requestId = requestId || Uuid.v4()
+  return CreateJsonResponse(CreateJsonRequest({ requestId: requestId }), type)
 }
 
 module.exports.createJsonRequest = CreateJsonRequest

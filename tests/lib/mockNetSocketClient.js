@@ -50,14 +50,18 @@ module.exports = (spec) => {
    */
   that.write = (data) => {
     Winston.log('info', '[MockNetSocket] Simulating sending:', data)
-    const Response = []
-    const Message = {}
-    Message[data] = []
-    for (let i = 0; i < spec.services['requester-cluster'].processes; i++) {
-      Message[data].push(Common.createJsonResponseMessage())
+    let message
+    const result = {}
+    for (let i = 0; i < spec.services['requesterCluster'].processes; i++) {
+      message = Common.createJsonResponseMessage(null, data.requestId)
+      let requestId = message.requestId
+      if (!result[requestId]) {
+        result[requestId] = []
+      }
+      delete message.requestId
+      result[requestId].push(message)
     }
-    Response.push(Message)
-    that.emit('data', JSON.stringify(Response))
+    that.emit('data', JSON.stringify(result))
   }
 
   return that

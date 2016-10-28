@@ -14,9 +14,13 @@ const Winston = require('winston')
 
 // my modules
 const Common = require('common.js')
+const RequestMessage = require('requestMessage.js')
+const ResponseMessage = require('responseMessage.js')
 
 module.exports = (spec) => {
   const RequesterSpec = spec.services[Path.parse(module.filename).name]
+  // Inversion of Control
+  const Requester = spec.concreteRequester
 
   let that = {}
 
@@ -24,22 +28,8 @@ module.exports = (spec) => {
   const Timeout = RequesterSpec.timeout
   const Deferreds = {}
   const RequesterId = Uuid.v4()
-  const Timeouts = {}
-  const Requester = spec.concreteRequester
 
-  // handle replies from responder
-  Requester.on('message', (data) => {
-    const Response = JSON.parse(data)
-    const messageId = Response.messageId
-    const Deferred = Deferreds[messageId]
-    Winston.log('debug', '[Requester:Worker] Received response from Responder:', Response)
-    clearTimeout(Timeouts[messageId])
-    Deferred.resolve(Response)
-    delete Timeouts[messageId]
-    delete Deferreds[messageId]
-  })
-
-  // connect to the requester(s)
+  // connect the requester
   let connection = RequesterSpec.connection
   Winston.log('debug', '[Requester:Worker] connecting:', {
     requesterId: RequesterId,
@@ -51,7 +41,9 @@ module.exports = (spec) => {
 
   /** @function makeRequest
    *
-   *  @summary  Makes a request to the requester(s).
+   *  @summary  Makes a request to the requester(s). Creates a promise that will either be resolved
+   *            by timing out or by receiving a message containing the same messageId from the
+   *            Responder (which means resolution will occur in a different function to this one). 
    *
    *  @since 1.0.0
    *
@@ -63,24 +55,60 @@ module.exports = (spec) => {
    *  @returns  {Object} A Promise.
    */
   that.makeRequest = (message) => {
-    const MessageId = message.messageId
-    const RequestId = message.requestId
-    const Filename = message.filename
-    const At = Date.now().toString()
     const Deferred = Q.defer()
-    Deferreds[MessageId] = Deferred
-    const newMessage = {
-      requestId: RequestId,
-      requesterId: RequesterId,
-      messageId: MessageId,
-      filename: Filename,
-      requestedAt: At
+    let newMessage
+
+    try {
+      newMessage = RequestMessage(message).requesterId(RequesterId).toJSON()
     }
+    catch(err) {
+      throw err
+    }
+    const MessageId = newMessage.messageId
+    Deferreds[MessageId] = Deferred
+    // make the promise timeout if we don't get a response in time
+    Deferred.promise.timeout(Timeout, 'request: ' + MessageId + ' timed out.')
+    .done(
+      () => {
+        // in order for the timeout promise to have resolved the original promise
+        // must have resolved so there's nothing more to do than delete it
+        delete Deferreds[MessageId]
+      },
+      (err) => {
+        Winston.log('error', '[Requester:Worker]', err.message)
+        const OriginalRequest = Deferreds[MessageId]
+        // remove the original request from the stack to prevent race conditions (i.e. if request
+        // resolves successfully in the few microseconds it takes to run the rest of this function)
+        delete Deferreds[MessageId]
+        // if the timeout has rejected then the original request will still be pending so resolve it
+        if (OriginalRequest.promise.isPending()) {
+          try {
+            OriginalRequest.resolve(ResponseMessage().request(newMessage).body(err.message).asError().toJSON())
+          }
+          catch(err2) {
+            OriginalRequest.reject(err2)
+          }
+          
+        }
+      }
+    )
+
     Winston.log('debug', '[Requester:Worker] Sending request:', newMessage)
     Requester.send(JSON.stringify(newMessage))
-    Timeouts[MessageId] = setTimeout(() => { Deferreds[MessageId].reject('request: ' + MessageId + ' timed out.') }, Timeout)
+
     return Deferred.promise
   }
+
+  // handle replies from responder(s)
+  // Resolves the promise created in 'makeRequest' with the same messageId as the response
+  Requester.on('message', (data) => {
+    const Response = JSON.parse(data)
+    const Deferred = Deferreds[Response.messageId]
+    Winston.log('debug', '[Requester:Worker] Received response from Responder:', Response)
+    if (Deferred) {
+      Deferred.resolve(Response)
+    }
+  })
 
   return that
 }

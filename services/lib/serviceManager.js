@@ -9,45 +9,46 @@
 // third-party modules
 const _ = require('lodash')
 const Winston = require('winston')
+const Q = require('q')
 
 // my modules
-// enable dynamic loading of modules
 const ModuleLoader = require('moduleLoader.js')
 const Services = {}
 
-/** @function getMq
+/** @function getService
  *
- *  @summary  Gets an instance of the required message queue module.
+ *  @summary  Gets an instance of the required service module.
  *
  *  @since 1.0.0
  *
- *  @param  {String}  mqName - The name of the message queue module to be instantiated.
+ *  @param  {String}  serviceName - The name of the service module to be instantiated.
  *  @param  {Object}  config - The configuration object.
  *
- *  @returns  {Object} An instance of the required message queue module.
+ *  @returns  {Object} An instance of the required service module.
  */
-module.exports.getMq = (mqName, config) => {
+module.exports.getService = (serviceName, config) => {
+  const Deferred = Q.defer()
   let modules = {}
 
   Winston.level = config.logLevel || 'info'
 
-  if (!Services[mqName]) {
-    modules[mqName] = config.services[mqName].module
+  if (!Services[serviceName]) {
+    modules[serviceName] = config.services[serviceName].module
     ModuleLoader.loadModules({ modules: modules })
     .done(
       (modules) => {
         // now the modules are loaded, instantiate them with the relevant settings
         _.forOwn(modules, (value, key) => {
-          if (key && (key === mqName)) {
-            Services[mqName] = value(config)
+          if (key && (key === serviceName)) {
+            Services[serviceName] = value(config)
           }
         })
+        return Deferred.resolve(Services[serviceName])
       },
       (err) => {
-        throw err
+        return Deferred.reject(err)
       }
     )
   }
-
-  return Services[mqName]
+  return Deferred.promise
 }

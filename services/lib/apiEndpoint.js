@@ -14,14 +14,9 @@ const Winston = require('winston')
  *
  *  @since 1.0.0
  *
- *  @param  {Object}  spec - A specification object.
- *  @param  {Object}  spec.config - An endpoint configuration object.
- *  @param  {Object}  spec.config.modules - A collection of modules.
- *  @param  {Object}  spec.config.app - The application object.
- *  @param  {String}  spec.config.pathPrefix - The URL prefix for endpoints.
- *  @param  {String}  spec.method - The REST method used by the endpoint ('get', 'post', 'put' or 'del')
- *  @param  {String}  spec.path - The unique path for the endpoint.
- *  @param  {String}  spec.connector - the name of the connector to use.
+ *  @param  {Object}  spec - A configuration specification.
+ *  @param  {Object}  spec.modules - A collection of modules.
+ *  @param  {Object}  spec.app - The application object.
  *
  *  @returns  {Object} The APIEndpoint.
  */
@@ -30,6 +25,8 @@ module.exports = (spec) => {
   // shouldn't be. Add methods to this array as appropriate
   // (e.g. 'post', 'put', 'del' etc.)
   const ValidMethods = ['get']
+
+  const HandlerInstances = {}
 
   // Inversion of Control
   const App = spec.app
@@ -51,10 +48,10 @@ module.exports = (spec) => {
    *
    *  @returns  {Object} The APIEndpoint.
    */
-  that.addHandler = function (handler, method, path) {
+  const addHandler = (handler, method, path) => {
     // make sure the method is valid
     if (ValidMethods.indexOf(method) >= 0) {
-      App[method](spec.host.apiPathPrefix + path, (req, res) => {
+      App[method](spec.webHost.apiPathPrefix + path, (req, res) => {
         // pass the parameters to the subclass so that they have access to the
         // request and response
         let params = that.getParams(req, res)
@@ -79,7 +76,8 @@ module.exports = (spec) => {
 
   /** @function getParams
    *
-   *  @summary Default implementation. Returns an empty array.
+   *  @summary  Default implementation. Returns an empty array.
+   *            Override as appropriate in subclasses.
    *
    *  @since 1.0.0
    *
@@ -88,9 +86,31 @@ module.exports = (spec) => {
    *
    *  @returns  {Object} The APIEndpoint.
    */
-  that.getParams = function (req, res) {
+  that.getParams = (req, res) => {
     // default implementation is to return an empty array
     return []
+  }
+
+  that.addHandlers = (options) => {
+    ModuleLoader.loadModules(options)
+    .done(
+      modules => {
+        let module, instance, serviceKey, handlerSettings
+        for (handlerSettings of options.handlerSettingsArray) {
+          serviceKey = handlerSettings.service
+          module = modules[serviceKey]
+          instance = HandlerInstances[serviceKey]
+          if (!instance) {
+            instance = module(options.spec)
+            HandlerInstances[serviceKey] = instance
+          }
+          addHandler(instance[handlerSettings.function], handlerSettings.method, handlerSettings.path)
+        }
+      },
+      err => {
+        throw err
+      }
+    )
   }
 
   return that

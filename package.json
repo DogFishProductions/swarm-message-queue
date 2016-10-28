@@ -29,8 +29,14 @@
     "docker:start:server": "cd docker-zmq && echo \"NODE_ENV=$npm_package_config_node_env\r\nNODE_PATH='./services/lib'\" > .env && docker-compose start server",
     "docker:stop": "cd docker-zmq && docker-compose stop",
     "test": "cd docker-zmq && echo \"NODE_ENV=test\r\nNODE_PATH='services/lib:tests/lib'\" > .env && docker-compose up test",
-    "lint": "standard 'services/**/*.js' 'public/**/*.js' 'tests/lib/*.js' --fix",
+    "lint": "standard 'services/**/*.js' 'public/**/*.js' --fix",
     "annotate": "gulp annotate"
+  },
+  "pre-commit": {
+    "run": [
+      "lint",
+      "test"
+    ]
   },
   "keywords": [
     "docker",
@@ -44,6 +50,7 @@
   },
   "dependencies": {
     "async": "^2.0.1",
+    "co": "^4.6.0",
     "express": "^4.14.0",
     "lodash": "^4.16.1",
     "morgan": "^1.7.0",
