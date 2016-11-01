@@ -17,6 +17,8 @@ Object.assign(Config, GeneralSettings)
 const ServiceDomain = (Config.NodeEnv === 'user-bridge' ? 'zerobridge' : 'localhost')
 
 // To change the handler for a service, simply reset the 'handler' value to the desired service key.
+// For custom services (i.e. those written for this app) it is necessary for the service key to match
+// the filename of the module defining that service.
 const Services = {
   'services': {
     'requesterManager': {
@@ -57,7 +59,7 @@ const Services = {
           'protocol': 'ipc',
           'domain': 'filer-dealer.ipc'
         }
-      }   
+      }
     },
     'responder': {
       'module': 'responder.js',

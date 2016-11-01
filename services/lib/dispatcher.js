@@ -12,7 +12,6 @@ const Path = require('path')
 
 // my modules
 const APIEndpoint = require('apiEndpoint.js')
-const ModuleLoader = require('moduleLoader.js')
 
 /** @function
  *
@@ -31,18 +30,18 @@ module.exports = (spec) => {
   const EndpointHandlerSettings = DispatcherSpec.handlers
   const HandlerModules = {}
 
-  let handlerSettings, serviceKey, handlerFunction
-  
+  let that = APIEndpoint(spec)
+
+  let handlerSettings, serviceKey
+
   for (handlerSettings of EndpointHandlerSettings) {
     serviceKey = handlerSettings.service
-    handlerFunction = handlerSettings.function
     //  make sure we instantiate each service only once
-    if (!HandlerInstances[serviceKey] && !HandlerModules[serviceKey])) {
+    if (!APIEndpoint.HandlerInstances[serviceKey] && !HandlerModules[serviceKey]) {
       HandlerModules[serviceKey] = spec.services[serviceKey].module
     }
   }
 
-  let that = APIEndpoint(spec)
   that.addHandlers({ modules: HandlerModules, spec: spec, handlerSettingsArray: EndpointHandlerSettings })
 
   return that

@@ -72,3 +72,4 @@ var Observer = (function (spec) {
 
   return that
 })()
+Observer

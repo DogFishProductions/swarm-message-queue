@@ -17,20 +17,6 @@ module.exports = (spec) => {
 
   Winston.level = spec.logLevel || 'info'
 
-  /** @function makeRequest
-   *
-   *  @summary  Simulates the receipt of a request.
-   *            Raises a 'data' event on itself together with a request string.
-   *
-   *  @since 1.0.0
-   *
-   *  @param  {String}  data - The request data.
-   *
-   */
-  that.makeRequest = (data) => {
-    that.emit('data', data)
-  }
-
   // Mock methods by overriding them
 
   /** @function write

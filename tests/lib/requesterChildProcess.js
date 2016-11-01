@@ -13,7 +13,6 @@ const Winston = require('winston')
 // my modules
 const MockZmqRequester = require('mockZmqRequester.js')
 const MockNetSocketServer = require('mockNetSocketServer.js')
-const MockNetSocketConnection = require('mockNetSocketConnection.js')
 // configuration file
 const Config = require('config.js')
 const RequesterModule = require('requesterCluster.js')
@@ -25,8 +24,6 @@ const MZmqRequester = MockZmqRequester(Config)
 Config.concreteRequester = MZmqRequester
 
 // replace the net module with our mock server and connection
-const MNetConnection = MockNetSocketConnection(Config)
-Config.connection = MNetConnection
 const MNetSocketServer = MockNetSocketServer(Config)
 Config.concreteSocketServer = MNetSocketServer
 
@@ -40,7 +37,7 @@ process.on('message', (m) => {
   if (m.pid === process.pid) {
     Winston.log('info', '[RequesterChildProcess] got message:', { m, pid: process.pid })
     MZmqRequester.type = (m.request.validFilename ? 'Response' : 'Error')
-    const Message = { requestId: m.request.requestId, filename: m.request.filename }
-    MNetConnection.makeRequest(JSON.stringify(Message))
+    const Message = { requestId: m.request.requestId, filename: m.request.filename }                                        
+    MNetSocketServer.makeRequest(JSON.stringify(Message))
   }
 })

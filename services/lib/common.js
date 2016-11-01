@@ -27,5 +27,12 @@ const CreateUrl = (connection) => {
   return conn
 }
 
+const extract = (key, obj) => {
+  const result = obj[key]
+  delete obj.key
+  return result
+}
+
 module.exports.randomInt = RandomInt
 module.exports.createUrl = CreateUrl
+module.exports.extract = extract

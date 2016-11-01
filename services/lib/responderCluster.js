@@ -14,6 +14,7 @@ const Path = require('path')
 
 // my modules
 const Common = require('common.js')
+const ModuleLoader = require('moduleLoader')
 
 module.exports = (spec) => {
   const ResponderClusterSpec = spec.services[Path.parse(module.filename).name]
@@ -22,10 +23,10 @@ module.exports = (spec) => {
 
   let that = {}
 
-  if (CLUSTER.isMaster) {
+  if (Cluster.isMaster) {
     // master process - create ROUTER and DEALER sockets, bind endpoints
-    // as master is most stable part of process  
-    const Router = Zmq.socket('router').bind(Common.createUrl(ResponderClusterSpec.router.connection)),
+    // as master is most stable part of process
+    const Router = Zmq.socket('router').bind(Common.createUrl(ResponderClusterSpec.router.connection))
     const Dealer = Zmq.socket('dealer').bind(Common.createUrl(ResponderClusterSpec.dealer.connection))
 
     // forward messages between router and dealer
@@ -49,15 +50,16 @@ module.exports = (spec) => {
   } else {
     const Handler = ResponderClusterSpec.handler
     const ResponderSpec = spec.services[Handler]
-    ModuleLoader.loadModules({ modules: { requester: spec.modules.services[Handler] } })
+    // we need to keep a reference to the responder to stop it being garbage collected
+    const Responders = []
+    ModuleLoader.loadModules({ modules: { responder: spec.modules.services[Handler] } })
     .done(
       (modules) => {
         ResponderSpec.logLevel = spec.logLevel
         // override the connection to suit the cluster dealer
         ResponderSpec.connection = ResponderClusterSpec.dealer.connection
         // Inversion of Control
-        ResponderSpec.responder = Responder
-        Responder = modules.requester(ResponderSpec)
+        Responders.push(modules.responder(ResponderSpec))
         // let the master know we're ready for action
         process.send({ response: 'ready' })
       },

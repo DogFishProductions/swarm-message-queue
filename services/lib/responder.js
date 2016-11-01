@@ -7,7 +7,6 @@
  */
 
 // third-party modules
-const Fs = require('fs')
 const Path = require('path')
 const Winston = require('winston')
 
@@ -60,17 +59,15 @@ module.exports = (spec) => {
       .responderId(process.pid)
       if (data.err) {
         Message
-        .body(data.err.message)
+        .body(data.err.message || 'Something went wrong')
         .asError()
-      }
-      else {
+      } else {
         Message
         .body(data.result)
         .asResponse()
       }
       response = JSON.stringify(Message.toJSON())
-    }
-    catch(err) {
+    } catch (err) {
       throw err
     }
     Winston.log('debug', '[Responder] sending response:', response)

@@ -29,6 +29,6 @@ ServiceManager.getService(MqName, Config)
   },
   err => {
     Winston.log('error', '[RequesterManager] couldn\'t load requester', err)
-    exit(1)
+    process.exit(1)
   }
 )

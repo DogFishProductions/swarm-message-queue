@@ -17,14 +17,14 @@ const ServiceManager = require('serviceManager.js')
 
 const Services = {}
 const MqName = Config.services.responderManager.handler
-const RequesterHandlerName = Config.services[MqName].handler
+const ResponderHandlerName = Config.services[MqName].handler
 
 Winston.level = Config.logLevel || 'info'
 
 // Inversion of Control for responder...
 Config.concreteResponder = Responder
 
-ServiceManager.getService(RequesterHandlerName, Config)
+ServiceManager.getService(ResponderHandlerName, Config)
 .then(
   handler => {
     Config.responderHandler = handler
@@ -37,6 +37,6 @@ ServiceManager.getService(RequesterHandlerName, Config)
   },
   err => {
     Winston.log('error', '[RequesterManager] couldn\'t load requester', err)
-    exit(1)
+    process.exit(1)
   }
 )

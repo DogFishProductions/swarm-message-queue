@@ -4,6 +4,8 @@
 
 const Winston = require('winston')
 
+const ModuleLoader = require('moduleLoader')
+
 /**
  * A superclass for API endpoints. Defines common methods and parameters.
  */
@@ -58,13 +60,11 @@ module.exports = (spec) => {
         // the result is an array so spread it to the handler function
         handler(...params)
         .done(
-          (result) => {
+          result => {
             Winston.log('debug', '[APIEndpoint] json results received:', result)
             res.json(result)
           },
-          (err) => {
-            res.status(500).send(err)
-          }
+          err => res.status(500).send(err)
         )
       })
     } else {
@@ -107,10 +107,12 @@ module.exports = (spec) => {
           addHandler(instance[handlerSettings.function], handlerSettings.method, handlerSettings.path)
         }
       },
-      err => {
-        throw err
-      }
+      err => throw err
     )
+  }
+
+  that.handlerInstances = () => {
+    return HandlerInstances
   }
 
   return that

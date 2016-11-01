@@ -6,7 +6,6 @@
 
 // third-party modules
 const Uuid = require('node-Uuid')
-const Winston = require('winston')
 const Validator = require('validator')
 
 // my modules
@@ -64,12 +63,10 @@ module.exports = spec => {
     if (req) {
       try {
         request = RequestMessage(req).toJSON()
-      }
-      catch(err) {
+      } catch (err) {
         throw err
       }
-    }
-    else {
+    } else {
       request = req
     }
     return that
@@ -86,11 +83,9 @@ module.exports = spec => {
   that.toJSON = () => {
     if (!config.responseType) {
       throw new Error('responseType required.')
-    }
-    else if (!config.body) {
+    } else if (!config.body) {
       throw new Error('body required.')
-    }
-    else if (!request) {
+    } else if (!request) {
       throw new Error('request required.')
     }
     Object.assign(config, request)
@@ -100,6 +95,7 @@ module.exports = spec => {
   // validate config values
   that.request(config.request)
   delete config.request
+  // this is OK as responderId will never be '0'
   that.responderId(config.responderId || -1)
   that.responseId(config.responseId || Uuid.v4())
   that.respondedAt(config.respondedAt || Date.now())

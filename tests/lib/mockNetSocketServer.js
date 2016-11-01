@@ -11,9 +11,12 @@
 const EventEmitter = require('events').EventEmitter
 const Winston = require('winston')
 
+// my modules
+const MockNetSocketConnection = require('mockNetSocketConnection.js')
+
 module.exports = (spec) => {
   let that = new EventEmitter()
-  let connection = spec.connection
+  let connection = MockNetSocketConnection(spec)
 
   Winston.level = spec.logLevel || 'info'
 
@@ -44,6 +47,20 @@ module.exports = (spec) => {
    */
   that.listen = (port, func) => {
     Winston.log('info', '[MockZmqRequester] Simulating listen')
+  }
+
+  /** @function makeRequest
+   *
+   *  @summary  Simulates the receipt of a request.
+   *            Raises a 'data' event on itself together with a request string.
+   *
+   *  @since 1.0.0
+   *
+   *  @param  {String}  data - The request data.
+   *
+   */
+  that.makeRequest = (data) => {
+    connection.emit('data', data)
   }
 
   return that

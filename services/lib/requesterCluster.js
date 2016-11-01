@@ -16,13 +16,13 @@ const Path = require('path')
 
 // my modules
 const ModuleLoader = require('moduleLoader.js')
+const Common = require('common.js')
 
 module.exports = (spec) => {
   // Inversion of Control
   const SocketServer = spec.concreteSocketServer
   const RequesterClusterSpec = spec.services[Path.parse(module.filename).name]
   const NoProc = RequesterClusterSpec.processes
-  const Timeout = RequesterClusterSpec.timeout
   const Deferreds = {}
   let count = 0
   let that = {}
@@ -36,12 +36,11 @@ module.exports = (spec) => {
     const FormatResponse = (response) => {
       const FormattedResponseEnvelope = {}
       for (let CurrentResponse of response) {
-        const requestId = CurrentResponse.requestId
+        const requestId = Common.extract('requestId', CurrentResponse)
 
         if (!FormattedResponseEnvelope[requestId]) {
           FormattedResponseEnvelope[requestId] = []
         }
-        delete CurrentResponse.requestId
         FormattedResponseEnvelope[requestId].push(CurrentResponse)
       }
       return FormattedResponseEnvelope
@@ -64,12 +63,8 @@ module.exports = (spec) => {
         Winston.log('debug', '[Requester:Master] received data from socket:', { requestId: data.toString() })
         MakeRequest(data.toString())
         .done(
-          (results) => {
-            connection.write(results)
-          },
-          (err) => {
-            connection.write(err)
-          }
+          results => connection.write(results),
+          err => connection.write(err)
         )
       })
     })
@@ -127,9 +122,7 @@ module.exports = (spec) => {
         Winston.log('debug', '[Requester:Master] response from worker:', msg)
         const MId = msg.messageId
         if (MId) {
-          const Deferred = Deferreds[MId]
-          Deferred.resolve(msg)
-          delete Deferreds[MId]
+          Common.extract(MId, Deferreds).resolve(msg)
         } else if (msg.response === 'ready') {
           // for testing purposes only
           count += 1
@@ -139,17 +132,17 @@ module.exports = (spec) => {
         }
       })
     }
-  } else { 
+  } else {
     const HandlerKey = RequesterClusterSpec.handler
     let Requester
     ModuleLoader.loadModules({ modules: { requester: spec.services[HandlerKey].module } })
     .done(
-      (modules) => {
+      modules => {
         Requester = modules.requester(spec)
         // let the master know we're ready for action
         process.send({ response: 'ready' })
       },
-      (err) => {
+      err => {
         throw err
       }
     )
@@ -159,13 +152,8 @@ module.exports = (spec) => {
       Winston.log('debug', '[Requester:Worker] received message from Master:', msg)
       Requester.makeRequest(msg)
       .done(
-        (results) => {
-          process.send(results)
-        },
-        (err) => {
-          err = err || 'something happened'
-          process.send(err)
-        }
+        results => process.send(results),
+        err => process.send(err || 'something happened')
       )
     })
   }

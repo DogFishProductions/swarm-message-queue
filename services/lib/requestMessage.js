@@ -6,7 +6,6 @@
 
 // third-party modules
 const Uuid = require('node-Uuid')
-const Winston = require('winston')
 const Validator = require('validator')
 
 module.exports = spec => {
@@ -52,8 +51,7 @@ module.exports = spec => {
   that.toJSON = () => {
     if (!config.requestId) {
       throw new Error('requestId required.')
-    }
-    else if (!config.requesterId) {
+    } else if (!config.requesterId) {
       throw new Error('requesterId required.')
     }
     return config

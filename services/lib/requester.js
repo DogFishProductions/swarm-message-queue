@@ -43,7 +43,7 @@ module.exports = (spec) => {
    *
    *  @summary  Makes a request to the requester(s). Creates a promise that will either be resolved
    *            by timing out or by receiving a message containing the same messageId from the
-   *            Responder (which means resolution will occur in a different function to this one). 
+   *            Responder (which means resolution will occur in a different function to this one).
    *
    *  @since 1.0.0
    *
@@ -60,8 +60,7 @@ module.exports = (spec) => {
 
     try {
       newMessage = RequestMessage(message).requesterId(RequesterId).toJSON()
-    }
-    catch(err) {
+    } catch (err) {
       throw err
     }
     const MessageId = newMessage.messageId
@@ -72,23 +71,20 @@ module.exports = (spec) => {
       () => {
         // in order for the timeout promise to have resolved the original promise
         // must have resolved so there's nothing more to do than delete it
-        delete Deferreds[MessageId]
+        Common.extract(MessageId, Deferreds)
       },
       (err) => {
         Winston.log('error', '[Requester:Worker]', err.message)
-        const OriginalRequest = Deferreds[MessageId]
         // remove the original request from the stack to prevent race conditions (i.e. if request
         // resolves successfully in the few microseconds it takes to run the rest of this function)
-        delete Deferreds[MessageId]
+        const OriginalRequest = Common.extract(MessageId, Deferreds)
         // if the timeout has rejected then the original request will still be pending so resolve it
         if (OriginalRequest.promise.isPending()) {
           try {
             OriginalRequest.resolve(ResponseMessage().request(newMessage).body(err.message).asError().toJSON())
-          }
-          catch(err2) {
+          } catch (err2) {
             OriginalRequest.reject(err2)
           }
-          
         }
       }
     )

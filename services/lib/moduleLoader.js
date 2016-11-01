@@ -51,7 +51,7 @@ module.exports.loadModules = (spec) => {
             Modules[name] = mod
           }
           Deferred.resolve()
-        } catch(err) {
+        } catch (err) {
           Deferred.reject(err)
         }
         return Deferred.promise
