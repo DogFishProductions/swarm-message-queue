@@ -12,10 +12,10 @@ const Uuid = require('node-Uuid')
 const Q = require('q')
 
 // my modules
-const Validator = require('testValidator.js')
-const MockZmqResponder = require('mockZmqResponder.js')
-const Common = require('utilities.js')
 const Config = require('config.js')
+const Validator = require('testValidator.js')
+const MockZmqResponderModule = require('mockZmqResponder.js')
+const Common = require('utilities.js')
 const ResponderModule = require('responder.js')
 const ServiceManager = require('serviceManager.js')
 
@@ -35,9 +35,10 @@ const CreateMessage = function (filename) {
     requestedAt: Date.now()
   }
 }
-const MZmqResponder = MockZmqResponder(Config)
+
 // inject the mock object
-Config.concreteResponder = MZmqResponder
+const MockZmqResponder = MockZmqResponderModule(Config)
+Config.concreteResponder = MockZmqResponder
 
 let type, pendingDone
 
@@ -63,7 +64,7 @@ describe('Responder', function () {
       pendingDone = done
       const NewRequest = Common.createJsonRequest({ filename: 'target.txt' })
       type = 'Response'
-      MZmqResponder.makeRequest(JSON.stringify(NewRequest))
+      MockZmqResponder.makeRequest(JSON.stringify(NewRequest))
     })
   })
 
@@ -72,7 +73,7 @@ describe('Responder', function () {
       pendingDone = done
       const NewRequest = Common.createJsonRequest({ filename: 'incorrect filename' })
       type = 'Error'
-      MZmqResponder.makeRequest(JSON.stringify(NewRequest))
+      MockZmqResponder.makeRequest(JSON.stringify(NewRequest))
     })
   })
 })

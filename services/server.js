@@ -20,7 +20,10 @@ const Config = require('config.js')
 const ModuleLoader = require('moduleLoader.js')
 
 Winston.level = Config.logLevel || 'info'
-Config.concreteSocketClient = new Net.Socket()
+/*
+if (!Config.concreteSocketClient) {
+  Config.concreteSocketClient = new Net.Socket()
+}//*/
 
 const ApiEndpointModules = {}
 _.forOwn(Config.apiEndpoints, (value, key) => {

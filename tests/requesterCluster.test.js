@@ -13,7 +13,6 @@
  */
 
 // third-party modules
-// const Expect = require('chai').expect
 const Winston = require('winston')
 const Fork = require('child_process').fork
 const Path = require('path')

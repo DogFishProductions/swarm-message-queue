@@ -14,7 +14,7 @@ const Path = require('path')
 
 // my modules
 const Common = require('common.js')
-const ModuleLoader = require('moduleLoader')
+const ModuleLoader = require('moduleLoader.js')
 
 module.exports = (spec) => {
   const ResponderClusterSpec = spec.services[Path.parse(module.filename).name]
@@ -22,12 +22,14 @@ module.exports = (spec) => {
   Winston.level = spec.logLevel || 'info'
 
   let that = {}
+  let count = 0
 
   if (Cluster.isMaster) {
     // master process - create ROUTER and DEALER sockets, bind endpoints
     // as master is most stable part of process
-    const Router = Zmq.socket('router').bind(Common.createUrl(ResponderClusterSpec.router.connection))
-    const Dealer = Zmq.socket('dealer').bind(Common.createUrl(ResponderClusterSpec.dealer.connection))
+    // Inversion of Control - note that this has to be passed in (i.e. not available from config.js)
+    const Router = spec.concreteRouter.bind(Common.createUrl(ResponderClusterSpec.router.connection))
+    const Dealer = spec.concreteDealer.bind(Common.createUrl(ResponderClusterSpec.dealer.connection))
 
     // forward messages between router and dealer
     Router.on('message', (...frames) => {
@@ -45,21 +47,28 @@ module.exports = (spec) => {
 
     // fork worker processes
     for (let i = 0; i < NoProc; i++) {
-      Cluster.fork()
+      let worker = Cluster.fork()
+      worker.on('message', (msg) => {
+        Winston.log('debug', '[Responder:Master] response from worker:', msg)
+        if (msg.response === 'ready') {
+          // for testing purposes only
+          count += 1
+          if ((count === NoProc) && process.send) {
+            process.send({ response: 'workers ready' })
+          }
+        }
+      })
     }
   } else {
     const Handler = ResponderClusterSpec.handler
     const ResponderSpec = spec.services[Handler]
     // we need to keep a reference to the responder to stop it being garbage collected
-    const Responders = []
-    ModuleLoader.loadModules({ modules: { responder: spec.modules.services[Handler] } })
+    let Responder
+    ModuleLoader.loadModules({ modules: { responder: spec.services[Handler].module } })
     .done(
       (modules) => {
-        ResponderSpec.logLevel = spec.logLevel
-        // override the connection to suit the cluster dealer
-        ResponderSpec.connection = ResponderClusterSpec.dealer.connection
         // Inversion of Control
-        Responders.push(modules.responder(ResponderSpec))
+        Responder = modules.responder(spec)
         // let the master know we're ready for action
         process.send({ response: 'ready' })
       },

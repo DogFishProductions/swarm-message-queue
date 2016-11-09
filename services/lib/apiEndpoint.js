@@ -107,7 +107,9 @@ module.exports = (spec) => {
           addHandler(instance[handlerSettings.function], handlerSettings.method, handlerSettings.path)
         }
       },
-      err => throw err
+      err => {
+        throw err
+      }
     )
   }
 

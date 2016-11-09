@@ -9,13 +9,30 @@ const _ = require('lodash')
 const Winston = require('winston')
 const Path = require('path')
 
+// my modules
+const ModuleLoader = require('moduleLoader.js')
+
 module.exports = (spec) => {
   const SocketSpec = spec.services[Path.parse(module.filename).name]
   const Deferreds = {}
   const Host = SocketSpec.connection.host
   const Port = SocketSpec.connection.port
+
+  let Client
+
   // Inversion of Control
-  const Client = spec.concreteSocketClient
+  if (spec.concreteSocketClient) {
+    Client = spec.concreteSocketClient
+  }
+  else {
+    ModuleLoader.loadModules({ modules: { client: SocketSpec.module } })
+    .done(
+      modules => Client = modules.client(spec),
+      err => {
+        throw err
+      }
+    )
+  }
 
   let that = {}
   let connected = false

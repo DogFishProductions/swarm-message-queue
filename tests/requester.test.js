@@ -11,18 +11,16 @@
 const Winston = require('winston')
 
 // my modules
+const Config = require('config.js')
 const Validator = require('testValidator.js')
 const Common = require('utilities.js')
-const MockZmqRequester = require('mockZmqRequester.js')
-const Config = require('config.js')
+const MockZmqRequester = require('mockZmqRequester.js')(Config)
 const RequesterModule = require('requester.js')
-
-const MZmqRequester = MockZmqRequester(Config)
 
 Winston.level = Config.logLevel || 'info'
 
 // inject the mock object
-Config.concreteRequester = MZmqRequester
+Config.concreteRequester = MockZmqRequester
 // now instantiate the module to be tested
 let Requester = RequesterModule(Config)
 
@@ -56,7 +54,7 @@ describe('Requester', function () {
       pendingDone = done
       const NewMessage = Common.createJsonRequest({ filename: 'incorrect filename' })
       type = 'Error'
-      MZmqRequester.type = type
+      MockZmqRequester.type = type
       Requester.makeRequest(NewMessage)
       .done(
         function (response) {
@@ -74,7 +72,7 @@ describe('Requester', function () {
       pendingDone = done
       const NewMessage = Common.createJsonRequest({ filename: 'target.txt' })
       type = 'Error'
-      MZmqRequester.type = type
+      MockZmqRequester.type = type
       // reset the timeout to be below the delay
       Config.services.requester.timeout = 10
       Requester = RequesterModule(Config)

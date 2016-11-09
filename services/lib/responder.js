@@ -13,13 +13,29 @@ const Winston = require('winston')
 // my modules
 const Common = require('common.js')
 const ResponseMessage = require('responseMessage.js')
+const ModuleLoader = require('moduleLoader.js')
 
 module.exports = (spec) => {
   // get the configuration for this module
   const ResponderSpec = spec.services[Path.parse(module.filename).name]
-  // Inversion of Control
+  const HandlerSpec = spec.services[ResponderSpec.handler]
+  // Inversion of Control - note that this has to be passed in (i.e. not available from config.js)
   const Responder = spec.concreteResponder
-  const Handler = spec.responderHandler
+
+  let Handler
+
+  if (spec.responderHandler) {
+    Handler = spec.responderHandler
+  }
+  else {
+    ModuleLoader.loadModules({ modules: { handler: HandlerSpec.module } })
+    .done(
+      modules => Handler = modules.handler(spec),
+      err => {
+        throw err
+      }
+    )
+  }
 
   let that = {}
   Winston.level = spec.logLevel || 'info'

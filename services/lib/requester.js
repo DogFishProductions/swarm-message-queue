@@ -19,7 +19,7 @@ const ResponseMessage = require('responseMessage.js')
 
 module.exports = (spec) => {
   const RequesterSpec = spec.services[Path.parse(module.filename).name]
-  // Inversion of Control
+  // Inversion of Control - note that this has to be passed in (i.e. not available from config.js)
   const Requester = spec.concreteRequester
 
   let that = {}

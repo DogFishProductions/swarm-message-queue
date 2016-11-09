@@ -8,7 +8,10 @@
 
 // third-party modules
 // this could be moved to the config file...
-const Responder = require('Zmq').socket('rep')
+const Zmq = require('Zmq')
+const Responder = Zmq.socket('rep')
+const Dealer = Zmq.socket('dealer')
+const Router = Zmq.socket('router')
 const Winston = require('winston')
 
 // my modules
@@ -21,8 +24,10 @@ const ResponderHandlerName = Config.services[MqName].handler
 
 Winston.level = Config.logLevel || 'info'
 
-// Inversion of Control for responder...
+// Inversion of Control...
 Config.concreteResponder = Responder
+Config.concreteDealer = Dealer
+Config.concreteRouter = Router
 
 ServiceManager.getService(ResponderHandlerName, Config)
 .then(

@@ -27,6 +27,7 @@ const Services = {
     'requesterCluster': {
       'module': 'requesterCluster.js',
       'handler': 'requester',
+      'server': 'socketServer',
       'processes': 3,
       'timeout': 10000,
       'listenPort': 5678
@@ -82,6 +83,9 @@ const Services = {
       'filename': 'target.txt',
       'minelay': 2000,
       'maxDelay': 2000
+    },
+    'socketServer': {
+      'module': 'net'
     }
   }
 }

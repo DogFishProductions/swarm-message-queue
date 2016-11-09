@@ -19,9 +19,25 @@ const ModuleLoader = require('moduleLoader.js')
 const Common = require('common.js')
 
 module.exports = (spec) => {
-  // Inversion of Control
-  const SocketServer = spec.concreteSocketServer
+  let SocketServer
+
   const RequesterClusterSpec = spec.services[Path.parse(module.filename).name]
+  const ServerSpec = spec.services[RequesterClusterSpec.server]
+
+  // Inversion of Control
+  if (spec.concreteSocketServer) {
+    SocketServer = spec.concreteSocketServer
+  }
+  else {
+    ModuleLoader.loadModules({ modules: { server: ServerSpec.module } })
+    .done(
+      modules => SocketServer = modules.server(spec),
+      err => {
+        throw err
+      }
+    )
+  } 
+
   const NoProc = RequesterClusterSpec.processes
   const Deferreds = {}
   let count = 0

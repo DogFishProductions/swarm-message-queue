@@ -16,13 +16,12 @@ const Common = require('utilities.js')
 // configuration file
 const Config = require('config.js')
 const SocketModule = require('socket.js')
-const MockNetSocket = require('mockNetSocketClient.js')
+const MockNetSocket = require('mockNetSocketClient.js')(Config)
 
 Winston.level = Config.logLevel || 'info'
 
 // inject the mock object
-Config.concreteSocketClient = MockNetSocket(Config)
-// now instantiate the module to be tested
+Config.concreteSocketClient = MockNetSocket
 const Socket = SocketModule(Config)
 
 describe('Socket', function () {
