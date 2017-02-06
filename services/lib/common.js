@@ -33,6 +33,12 @@ const extract = (key, obj) => {
   return result
 }
 
+const assignParamValue = (param, module) => {
+  param = module
+  return param
+}
+
 module.exports.randomInt = RandomInt
 module.exports.createUrl = CreateUrl
 module.exports.extract = extract
+module.exports.assignParamValue = assignParamValue

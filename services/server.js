@@ -26,7 +26,7 @@ if (!Config.concreteSocketClient) {
 }//*/
 
 const ApiEndpointModules = {}
-_.forOwn(Config.apiEndpoints, (value, key) => {
+_.each(Config.apiEndpoints, (value, key) => {
   ApiEndpointModules[key] = value.module
 })
 
@@ -34,9 +34,9 @@ ModuleLoader.loadModules({ modules: ApiEndpointModules, parentKey: 'apiEndpoints
 .done(
   (modules) => {
     const Host = Config.webHost
-    _.forOwn(modules.apiEndpoints, (value, key) => {
+    _.each(modules.apiEndpoints, (value, key) => {
+      Config.app = App;
       if (key) {
-        Config.app = App
         value(Config)
       }
     })

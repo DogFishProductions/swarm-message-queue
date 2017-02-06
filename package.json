@@ -51,6 +51,7 @@
   "dependencies": {
     "async": "^2.0.1",
     "co": "^4.6.0",
+    "data.maybe": "^1.2.2",
     "express": "^4.14.0",
     "lodash": "^4.16.1",
     "morgan": "^1.7.0",
