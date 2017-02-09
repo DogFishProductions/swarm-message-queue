@@ -10,7 +10,7 @@
 const Winston = require('winston')
 const Path = require('path')
 const _ = require('lodash')
-const Maybe = requre('data.maybe')
+const Maybe = require('data.maybe')
 
 // my modules
 const APIEndpoint = require('./apiEndpoint')
@@ -35,15 +35,15 @@ module.exports = (spec) => {
 
   let that = APIEndpoint(spec)
 
-  let handlerSettings, serviceKey
+  let serviceKey
 
-  _.each(EndpointHandlerSettings, (value, key) => {
+  EndpointHandlerSettings.map(handlerSettings => {
     serviceKey = handlerSettings.service
     //  make sure we instantiate each service only once
-    Maybe.fromNullable(APIEndpoint.HandlerInstances[serviceKey])
+    Maybe.fromNullable(that.handlerInstances()[serviceKey])
       .orElse(
-        Maybe.fromNullable(HandlerModules[serviceKey])
-          .orElse(utilities.assignParamValue(HandlerModules[serviceKey], spec.services[serviceKey].module))
+        () => Maybe.fromNullable(HandlerModules[serviceKey])
+          .orElse(() => _.set(HandlerModules, serviceKey, spec.services[serviceKey].module))
       )
   })
 

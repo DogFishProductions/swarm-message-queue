@@ -2,9 +2,15 @@
 [![js-standard-style][standard-badge]][standard-style]
 An investigation into Docker Swarm using a message queue cluster.
 
+### Pre-requisites
+#### Mac OS (El Capitan)
+brew install pkg-config
+brew install zmq
+
+### Configure environment
 npm config set swarm-message-queue:node_env local
 
-To update the Docker version on the PIs:
+### To update the Docker version on the PIs:
 
 sudo apt-get remove docker-engine docker-compose docker-machine
 sudo apt-get autoremove

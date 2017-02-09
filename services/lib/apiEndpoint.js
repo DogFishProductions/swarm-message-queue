@@ -3,7 +3,8 @@
 'use strict'
 
 const Winston = require('winston')
-const Maybe = requre('data.maybe')
+const Maybe = require('data.maybe')
+const _ = require('lodash')
 
 const ModuleLoader = require('moduleLoader')
 const utilities = require('./common')
@@ -123,11 +124,13 @@ module.exports = (spec) => {
     ModuleLoader.loadModules(options)
     .done(
       modules => {
-        let instance, serviceKey, handlerSettings
+        let module, instance, serviceKey, handlerSettings
         for (handlerSettings of options.handlerSettingsArray) {
           serviceKey = handlerSettings.service
-          instance = Maybe.fromNullable(HandlerInstances[serviceKey])
-            .getOrElse(utilities.assignParamValue(HandlerInstances[serviceKey] = modules[serviceKey](options.spec))
+          module = modules[serviceKey]
+          Maybe.fromNullable(HandlerInstances[serviceKey])
+            .orElse(() => _.set(HandlerInstances, serviceKey, module(options.spec)))
+          instance = HandlerInstances[serviceKey]
           addHandler(instance[handlerSettings.function], handlerSettings.method, handlerSettings.path)
         }
       },

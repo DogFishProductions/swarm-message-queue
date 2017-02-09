@@ -26,8 +26,7 @@ module.exports = (spec) => {
 
   if (spec.responderHandler) {
     Handler = spec.responderHandler
-  }
-  else {
+  } else {
     ModuleLoader.loadModules({ modules: { handler: HandlerSpec.module } })
     .done(
       modules => Handler = modules.handler(spec),

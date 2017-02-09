@@ -20,10 +20,10 @@ const Config = require('config.js')
 const ModuleLoader = require('moduleLoader.js')
 
 Winston.level = Config.logLevel || 'info'
-/*
+
 if (!Config.concreteSocketClient) {
   Config.concreteSocketClient = new Net.Socket()
-}//*/
+}
 
 const ApiEndpointModules = {}
 _.each(Config.apiEndpoints, (value, key) => {
@@ -35,7 +35,7 @@ ModuleLoader.loadModules({ modules: ApiEndpointModules, parentKey: 'apiEndpoints
   (modules) => {
     const Host = Config.webHost
     _.each(modules.apiEndpoints, (value, key) => {
-      Config.app = App;
+      Config.app = App
       if (key) {
         value(Config)
       }
