@@ -14,7 +14,6 @@ const Maybe = require('data.maybe')
 
 // my modules
 const APIEndpoint = require('./apiEndpoint')
-const utilities = require('./common')
 
 /** @function
  *

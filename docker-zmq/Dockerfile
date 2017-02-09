@@ -1,6 +1,6 @@
 # Version: 0.0.2
 
-FROM risingstack/alpine:3.4-v6.3.0-3.6.2
+FROM risingstack/alpine:3.4-v6.9.1-4.1.0
 
 MAINTAINER Paul Nebel "paul@nebel.io"
 ENV REFRESHED_AT 2016_07_23

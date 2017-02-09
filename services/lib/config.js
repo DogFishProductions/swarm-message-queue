@@ -3,7 +3,7 @@ Config.NodeEnv = process.env.NODE_ENV
 
 // general settings
 const GeneralSettings = {
-  'logLevel': 'error',
+  'logLevel': 'info',
   'webHost': {
     'protocol': 'http',
     'domain': 'localhost',
@@ -14,7 +14,7 @@ const GeneralSettings = {
 
 Object.assign(Config, GeneralSettings)
 
-const ServiceDomain = (Config.NodeEnv === 'user-bridge' ? 'zerobridge' : 'localhost')
+const ServiceDomain = (Config.NodeEnv === 'user-bridge' ? 'zerobridge' : '127.0.0.1')
 
 // To change the handler for a service, simply reset the 'handler' value to the desired service key.
 // For custom services (i.e. those written for this app) it is necessary for the service key to match
@@ -42,12 +42,12 @@ const Services = {
       'timeout': 10000
     },
     'responderManager': {
-      'handler': 'responder'
+      'handler': 'responderCluster'
     },
     'responderCluster': {
       'module': 'responderCluster.js',
       'handler': 'responder',
-      'processes': 1,
+      'processes': 3,
       'router': {
         'connection': {
           'protocol': 'tcp',
@@ -66,9 +66,8 @@ const Services = {
       'module': 'responder.js',
       'handler': 'fileReader',
       'connection': {
-        'protocol': 'tcp',
-        'domain': ServiceDomain,
-        'port': 5432
+        'protocol': 'ipc',
+        'domain': 'filer-dealer.ipc'
       }
     },
     'socket': {

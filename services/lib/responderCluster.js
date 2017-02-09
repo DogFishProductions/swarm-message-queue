@@ -8,9 +8,9 @@
 
 // third-party modules
 const Cluster = require('cluster')
-const Zmq = require('zmq')
 const Winston = require('winston')
 const Path = require('path')
+const _ = require('lodash')
 
 // my modules
 const Common = require('common.js')
@@ -61,7 +61,6 @@ module.exports = (spec) => {
     }
   } else {
     const Handler = ResponderClusterSpec.handler
-    const ResponderSpec = spec.services[Handler]
     // we need to keep a reference to the responder to stop it being garbage collected
     let Responder
     ModuleLoader.loadModules({ modules: { responder: spec.services[Handler].module } })

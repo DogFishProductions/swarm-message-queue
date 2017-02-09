@@ -29,7 +29,9 @@ module.exports = (spec) => {
   } else {
     ModuleLoader.loadModules({ modules: { handler: HandlerSpec.module } })
     .done(
-      modules => Handler = modules.handler(spec),
+      modules => {
+        Handler = modules.handler(spec)
+      },
       err => {
         throw err
       }
@@ -39,16 +41,18 @@ module.exports = (spec) => {
   let that = {}
   Winston.level = spec.logLevel || 'info'
 
-  Responder.on('message', (data) => {
-    // parse incoming message
-    let request = JSON.parse(data)
-    Winston.log('debug', '[Responder] received request:', request)
-    Handler.doYourStuff(request)
-    .done(
-      response => Respond(response),
-      err => Respond(err)
-    )
-  })
+  Responder
+    .connect(Common.createUrl(ResponderSpec.connection))
+    .on('message', (data) => {
+      // parse incoming message
+      let request = JSON.parse(data)
+      Winston.log('debug', '[Responder] received request:', request)
+      Handler.doYourStuff(request)
+      .done(
+        response => Respond(response),
+        err => Respond(err)
+      )
+    })
 
   /** @function Respond
    *
@@ -87,17 +91,6 @@ module.exports = (spec) => {
     }
     Winston.log('debug', '[Responder] sending response:', response)
     Responder.send(response)
-  }
-
-  if (ResponderSpec.processes > 1) {
-    // responder is not the most stable part of the connection and should connect
-    Responder.connect(Common.createUrl(ResponderSpec.dealer.connection))
-  } else {
-    // responder is the most stable part of the connection and should bind
-    Responder.bind(Common.createUrl(ResponderSpec.connection), () => {
-      // should handle errors here...
-      Winston.log('info', '[Responder] listening for Zmq requesters:', ResponderSpec.connection)
-    })
   }
 
   // close the reponder when the Node process ends

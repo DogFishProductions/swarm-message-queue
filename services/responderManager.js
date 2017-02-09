@@ -20,7 +20,6 @@ const ServiceManager = require('serviceManager.js')
 
 const Services = {}
 const MqName = Config.services.responderManager.handler
-const ResponderHandlerName = Config.services[MqName].handler
 
 Winston.level = Config.logLevel || 'info'
 
@@ -29,13 +28,7 @@ Config.concreteResponder = Responder
 Config.concreteDealer = Dealer
 Config.concreteRouter = Router
 
-ServiceManager.getService(ResponderHandlerName, Config)
-.then(
-  handler => {
-    Config.responderHandler = handler
-    return ServiceManager.getService(MqName, Config)
-  }
-)
+ServiceManager.getService(MqName, Config)
 .done(
   service => {
     Services[MqName] = service

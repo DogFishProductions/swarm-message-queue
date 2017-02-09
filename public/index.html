@@ -44,7 +44,7 @@
     <div id="error"></div>
 
     <script type="text/javascript">
-      var o = Observer
+      var o = DFObserver
       var connectionProvider, responseProvider
 
       var observeConnection = function () {
@@ -84,43 +84,43 @@
             spinner.style.visibility = "hidden"
           }
         };
-        xhttp.open("GET", "/api/v1/connect", true)
+        xhttp.open("GET", "/api/v1/dispatcher/connect", true)
         xhttp.setRequestHeader('Content-Type', 'application/json')
         xhttp.send();
       }
 
       var observeResponse = function () {
-        responseProvider = o.observable({ responses: [] })
+        responseProvider = o.observable({ response: {} })
         var responses = document.getElementById('responses')
         o.observe(function () {
-          // assign this handler function to the stockPrice property
-          var responsesProperty = responseProvider.responses
-          if (responsesProperty.length > 0) {
+          var responseProperty = responseProvider.response
+          if (responseProperty) {
             var card = document.getElementById('card')
             card.style.visibility = "visible"
             var currentResponse, currentKey, currentResult
             var insertedHTML = '<div class="div-table">\
                   <div class="div-table-row">'
-            for (var i = 0; i < responsesProperty.length; i++) {
-              currentResponse = responsesProperty[i]
-              for (var j = 0; j < Object.keys(currentResponse).length; j++) {
-                currentKey = Object.keys(currentResponse)[j]
-                for (var k = 0; k < currentKey.length; k++) {
-                  currentResult = currentKey[k]
-                  insertedHTML += '<div class="div-table-col">\
-                    <div class="div-table-cell">\
-                      <ul>\
-                        <li>Requester Id: ' + currentResult.requesterId + '</li>\
-                        <li>Responder Id: ' + currentResult.responderPid + '</li>\
-                        <li>Message Id: ' + currentResult.messageId + '</li>\
-                        <li>Content: ' + currentResult.content + '</li>\
-                        <li>Delay: ' + (currentResult.respondedAt - currentResult.requestedAt) + '</li>\
-                    </div>\
-                  </div>'
+              for (key in responseProperty) {
+                if (key != '_handlers') {
+                  if (responseProperty.hasOwnProperty(key)) {
+                    currentKey = key
+                    for (var i = 0; i < responseProperty[currentKey].length; i++) {
+                      currentResult = responseProperty[currentKey][i]
+                      insertedHTML += '<div class="div-table-col">\
+                        <div class="div-table-cell">\
+                          <ul>\
+                            <li>Requester Id: ' + currentResult.requesterId + '</li>\
+                            <li>Request Id: ' + currentResult.requestId + '</li>\
+                            <li>Responder Id: ' + currentResult.responderId + '</li>\
+                            <li>Message Id: ' + currentResult.messageId + '</li>\
+                            <li>Content: ' + currentResult.body + '</li>\
+                            <li>Delay: ' + (currentResult.respondedAt - currentResult.requestedAt) + '</li>\
+                        </div>\
+                      </div>'
+                    }
+                  }
                 }
-
               }    
-            }
             insertedHTML += '</div>\
               </div>'
             responses.innerHTML += insertedHTML;
@@ -144,12 +144,12 @@
               error.innerHTML = JSON.stringify(response.msg)
               error.style.visibility = "visible"
             } else {
-              responseProvider.responses = response
+              responseProvider.response = response
             }
             spinner.style.visibility = "hidden"
           }
         };
-        xhttp.open("GET", "/api/v1/request", true)
+        xhttp.open("GET", "/api/v1/dispatcher/request", true)
         xhttp.setRequestHeader('Content-Type', 'application/json')
         xhttp.send();
       }

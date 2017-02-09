@@ -5,7 +5,7 @@
  * A module that allows objects to automatically run handler functions in response to changes in property values.
  */
 
-var Observer = (function (spec) {
+var DFObserver = (function (spec) {
   var activeHandler
   var that = {}
   var observableProp = (provider, prop) => {
@@ -72,4 +72,4 @@ var Observer = (function (spec) {
 
   return that
 })()
-Observer
+DFObserver

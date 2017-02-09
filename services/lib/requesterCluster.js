@@ -33,9 +33,10 @@ module.exports = (spec) => {
 
   Maybe.fromNullable(spec.concreteSocketServer)
     .map(srv => Promise.resolve(srv))
-    .getOrElse(ModuleLoader.loadModules({ modules: { server: ServerSpec.module } }))
+    .getOrElse(loadModules({ modules: { server: ServerSpec.module } }))
     .then(
-      SocketServer => {
+      modules => {
+        const SocketServer = modules.server
         if (Cluster.isMaster) {
           const Connections = {}
           const port = RequesterClusterSpec.listenPort
@@ -54,7 +55,7 @@ module.exports = (spec) => {
           }
 
           // listen on a socket for incoming requests
-          SocketServer.createServer((connection) => {
+          SocketServer.createServer(connection => {
             Winston.log('info', '[Requester:Master] socket subscriber listening:', { port: port })
             connection.uuid = Uuid.v4()
             Connections[connection.uuid] = connection
@@ -70,7 +71,7 @@ module.exports = (spec) => {
               Winston.log('debug', '[Requester:Master] received data from socket:', { requestId: data.toString() })
               MakeRequest(data.toString())
               .done(
-                results => connection.write(results),
+                results => connection.write(JSON.stringify(results)),
                 err => connection.write(err)
               )
             })
@@ -145,7 +146,7 @@ module.exports = (spec) => {
         } else {
           const HandlerKey = RequesterClusterSpec.handler
           let Requester
-          ModuleLoader.loadModules({ modules: { requester: spec.services[HandlerKey].module } })
+          loadModules({ modules: { requester: spec.services[HandlerKey].module } })
           .done(
             modules => {
               Requester = modules.requester(spec)

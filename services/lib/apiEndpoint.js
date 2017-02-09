@@ -7,7 +7,6 @@ const Maybe = require('data.maybe')
 const _ = require('lodash')
 
 const ModuleLoader = require('moduleLoader')
-const utilities = require('./common')
 
 /**
  * A superclass for API endpoints. Defines common methods and parameters.
@@ -36,11 +35,6 @@ module.exports = (spec) => {
   // Inversion of Control
   const App = spec.app
 
-  const assignParamValue = (param, module) => {
-    param = module
-    return param
-  }
-
   Winston.level = spec.logLevel || 'info'
 
   let that = {}
@@ -63,7 +57,7 @@ module.exports = (spec) => {
     if (ValidMethods.indexOf(method) >= 0) {
       // add the endpoint to express
       App[method](
-        spec.webHost.apiPathPrefix + path, 
+        spec.webHost.apiPathPrefix + path,
         (req, res) => {
           // pass the parameters to the subclass so that they have access to the
           // request and response
@@ -72,7 +66,7 @@ module.exports = (spec) => {
           handler(...params)
           .done(
             result => {
-              Winston.log('debug', '[APIEndpoint] json results received:', result)
+              Winston.log('debug', '[APIEndpoint] json results received:', JSON.stringify(result, null, 4))
               res.json(result)
             },
             err => res.status(500).send(err)

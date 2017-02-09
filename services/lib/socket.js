@@ -23,11 +23,12 @@ module.exports = (spec) => {
   // Inversion of Control
   if (spec.concreteSocketClient) {
     Client = spec.concreteSocketClient
-  }
-  else {
+  } else {
     ModuleLoader.loadModules({ modules: { client: SocketSpec.module } })
     .done(
-      modules => Client = modules.client(spec),
+      modules => {
+        Client = modules.client(spec)
+      },
       err => {
         throw err
       }
@@ -41,11 +42,13 @@ module.exports = (spec) => {
   Winston.level = spec.logLevel || 'info'
 
   that.connect = () => {
+    Winston.info('[Socket] Received request to connect')
     deferred = Q.defer()
     if (!connected) {
+      Winston.info('[Socket] Client attempting to connect:', { host: Host, port: Port })
       Client.connect(Port, Host, () => {
         connected = true
-        Winston.log('info', '[Socket] Client connected:', { host: Host, port: Port })
+        Winston.info('[Socket] Client connected:', { host: Host, port: Port })
         deferred.resolve({ connected: true, msg: 'Socket connected to: ' + Port + ' on ' + Host })
       })
     } else {
@@ -90,7 +93,7 @@ module.exports = (spec) => {
     if (Client._handle && Client.writable) {
       const RequestId = Uuid.v4()
       Deferreds[RequestId] = Deferred
-      Client.write({ requestId: RequestId })
+      Client.write(JSON.stringify({ requestId: RequestId }))
     } else {
       let err = '[Socket] There\'s a problem with the Client socket: '
       if (!Client._handler) {

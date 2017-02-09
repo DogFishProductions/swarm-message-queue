@@ -91,6 +91,7 @@ module.exports = (spec) => {
 
     Winston.log('debug', '[Requester:Worker] Sending request:', newMessage)
     Requester.send(JSON.stringify(newMessage))
+    Winston.debug('[Requester:Worker] sent request: ', newMessage)
 
     return Deferred.promise
   }
