@@ -8,7 +8,7 @@
 
 // third-party modules
 // this could be moved to the config file...
-const Zmq = require('Zmq')
+const Zmq = require('zmq')
 const Responder = Zmq.socket('rep')
 const Dealer = Zmq.socket('dealer')
 const Router = Zmq.socket('router')

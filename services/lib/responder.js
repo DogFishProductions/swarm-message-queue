@@ -41,8 +41,15 @@ module.exports = (spec) => {
   let that = {}
   Winston.level = spec.logLevel || 'info'
 
+  Winston.info('[Responder] connecting to ', Common.createUrl(ResponderSpec.connection))
+
   Responder
-    .connect(Common.createUrl(ResponderSpec.connection))
+    .connect(Common.createUrl(ResponderSpec.connection), function (error) {
+      if (error) {
+        Winston.error('Router failed to connect socket: ' + error.message)
+        process.exit(0)
+      }
+    })
     .on('message', (data) => {
       // parse incoming message
       let request = JSON.parse(data)

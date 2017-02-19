@@ -24,7 +24,8 @@ Gulp.task('nodemon', function (done) {
     ext: 'js html',
     env: {
       'NODE_ENV': GetOption('node_env'),
-      'NODE_PATH': GetOption('node_path')
+      'NODE_PATH': GetOption('node_path'),
+      'FILE_NAME': GetOption('target')
     }
   })
   .on('start', function () {

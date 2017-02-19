@@ -28,7 +28,7 @@ module.exports = spec => {
     request.filename = request.filename || ReaderSpec.filename
 
     const ReadFile = options => {
-      Fs.readFile(options.filename, (err, content) => {
+      Fs.readFile(Path.join(__dirname, options.filename), (err, content) => {
         let result, type
         if (err) {
           return Deferred.reject({ request: request, err: err })

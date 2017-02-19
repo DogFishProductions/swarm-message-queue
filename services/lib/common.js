@@ -16,7 +16,7 @@ const RandomInt = (min, max) => {
   if (minimum >= maximum) {
     minimum = maximum - 1
   }
-  return (Math.random() * (maximum - minimum)) + minimum
+  return parseInt((Math.random() * (maximum - minimum)) + minimum)
 }
 
 const CreateUrl = (connection) => {

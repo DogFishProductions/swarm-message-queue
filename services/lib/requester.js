@@ -37,7 +37,13 @@ module.exports = (spec) => {
     domain: connection.domain,
     port: connection.port
   })
-  Requester.connect(Common.createUrl(connection))
+  Winston.info('[Requester] connecting to ', Common.createUrl(connection))
+  Requester.connect(Common.createUrl(connection), function (error) {
+    if (error) {
+      Winston.error('Router failed to connect socket: ' + error.message)
+      process.exit(0)
+    }
+  })
 
   /** @function makeRequest
    *

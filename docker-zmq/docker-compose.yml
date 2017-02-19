@@ -7,21 +7,18 @@ services:
    - $PWD/..:/home/dogfish/app
   networks:
    - zerobridge
-  command: sh ./shell/scripts/startup.sh ${NODE_ENV} ${NODE_PATH} ./services/requesterManager.js target.txt
+  command: sh ./shell/scripts/startup-requester.sh ${NODE_ENV} ${NODE_PATH} ./app/services/requesterManager.js
 
  responder:
   extends:
    service: requester
-  command: sh ./shell/scripts/startup.sh ${NODE_ENV} ${NODE_PATH} ./services/responderManager.js
+  command: sh ./shell/scripts/startup-responder.sh ${NODE_ENV} ${NODE_PATH} ./app/services/responderManager.js ../../target.txt
 
  server:
   extends:
    service: requester
   ports:
    - "3000:3000"
-  depends_on:
-   - responder
-   - requester
   command: sh ./shell/scripts/startup.sh ${NODE_ENV} ${NODE_PATH} ./services/server.js
 
  debug:
@@ -45,3 +42,6 @@ services:
 
 networks:
  zerobridge:
+ my-overlay:
+  external:
+    name: my-net

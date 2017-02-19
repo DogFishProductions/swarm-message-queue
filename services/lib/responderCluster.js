@@ -10,7 +10,6 @@
 const Cluster = require('cluster')
 const Winston = require('winston')
 const Path = require('path')
-const _ = require('lodash')
 
 // my modules
 const Common = require('common.js')
@@ -28,8 +27,20 @@ module.exports = (spec) => {
     // master process - create ROUTER and DEALER sockets, bind endpoints
     // as master is most stable part of process
     // Inversion of Control - note that this has to be passed in (i.e. not available from config.js)
-    const Router = spec.concreteRouter.bind(Common.createUrl(ResponderClusterSpec.router.connection))
-    const Dealer = spec.concreteDealer.bind(Common.createUrl(ResponderClusterSpec.dealer.connection))
+    Winston.info('[ResponderCluster::Router] binding to ', Common.createUrl(ResponderClusterSpec.router.connection))
+    Winston.info('[ResponderCluster::Dealer] binding to ', Common.createUrl(ResponderClusterSpec.dealer.connection))
+    const Router = spec.concreteRouter.bind(Common.createUrl(ResponderClusterSpec.router.connection), function (error) {
+      if (error) {
+        Winston.error('Router failed to connect socket: ' + error.message)
+        process.exit(0)
+      }
+    })
+    const Dealer = spec.concreteDealer.bind(Common.createUrl(ResponderClusterSpec.dealer.connection), function (error) {
+      if (error) {
+        Winston.error('Router failed to connect socket: ' + error.message)
+        process.exit(0)
+      }
+    })
 
     // forward messages between router and dealer
     Router.on('message', (...frames) => {

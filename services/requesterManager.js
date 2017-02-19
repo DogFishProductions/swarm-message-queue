@@ -8,7 +8,7 @@
 
 // third-party modules
 // this could be moved to the config file...
-const Requester = require('Zmq').socket('req')
+const Requester = require('zmq').socket('req')
 const Winston = require('winston')
 
 // my modules

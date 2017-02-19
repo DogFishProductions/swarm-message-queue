@@ -1,9 +1,10 @@
 const Config = module.exports = {}
 Config.NodeEnv = process.env.NODE_ENV
+Config.FileName = process.env.FILE_NAME || 'target.txt'
 
 // general settings
 const GeneralSettings = {
-  'logLevel': 'info',
+  'logLevel': 'debug',
   'webHost': {
     'protocol': 'http',
     'domain': 'localhost',
@@ -14,7 +15,8 @@ const GeneralSettings = {
 
 Object.assign(Config, GeneralSettings)
 
-const ServiceDomain = (Config.NodeEnv === 'user-bridge' ? 'zerobridge' : '127.0.0.1')
+const ServerDomain = (Config.NodeEnv === 'user-bridge' ? 'requester' : '127.0.0.1')
+const RequesterDomain = (Config.NodeEnv === 'user-bridge' ? 'responder' : '127.0.0.1')
 
 // To change the handler for a service, simply reset the 'handler' value to the desired service key.
 // For custom services (i.e. those written for this app) it is necessary for the service key to match
@@ -36,7 +38,7 @@ const Services = {
       'module': 'requester.js',
       'connection': {
         'protocol': 'tcp',
-        'domain': ServiceDomain,
+        'domain': RequesterDomain,
         'port': 5432
       },
       'timeout': 10000
@@ -51,7 +53,7 @@ const Services = {
       'router': {
         'connection': {
           'protocol': 'tcp',
-          'domain': ServiceDomain,
+          'domain': '*',
           'port': 5432
         }
       },
@@ -74,14 +76,14 @@ const Services = {
       'module': 'socket.js',
       'connection': {
         'port': 5678,
-        'host': ServiceDomain
+        'host': ServerDomain
       }
     },
     'fileReader': {
       'module': 'fileReader.js',
-      'filename': 'target.txt',
-      'minelay': 2000,
-      'maxDelay': 2000
+      'filename': Config.FileName,
+      'minDelay': 1000,
+      'maxDelay': 3000
     },
     'socketServer': {
       'module': 'net'

@@ -9,7 +9,7 @@ LABEL version="1.1"
 
 # Add the relevant packages so that we can 'npm install zmq'
 RUN apk update -q &&\
-    apk add --no-cache make gcc g++ python zeromq zeromq-dev &&\
+    apk add --no-cache make gcc g++ python zeromq zeromq-dev netcat-openbsd iproute2 &&\
     apk upgrade
 
 # Create "dogfish" user
